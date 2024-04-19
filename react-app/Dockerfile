@@ -1,6 +1,6 @@
 FROM node:20.11.1
-WORKDIR /app/react-app
+WORKDIR /app/react-app/front
 COPY package*.json ./
 RUN yarn install
-COPY . ./react-app
-# ENTRYPOINT [ "npm", "start" ]
+COPY . ../
+ENTRYPOINT [ "npm", "start" ]

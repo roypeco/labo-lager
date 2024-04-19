@@ -15,7 +15,7 @@ services:
     ports:
       - '8000:8000'
     volumes:
-      - './go-app:/app'
+      - './go-app:/app/go'
     tty: true
     stdin_open: true
 
