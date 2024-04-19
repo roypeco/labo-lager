@@ -5,6 +5,8 @@ services:
     build: ./react-app
     ports:
       - '3000:3000'
+    volumes:
+      - './react-app:/app/react-app'
     tty: true
     stdin_open: true
     
@@ -12,6 +14,8 @@ services:
     build: ./go-app
     ports:
       - '8000:8000'
+    volumes:
+      - './go-app:/app'
     tty: true
     stdin_open: true
 
@@ -20,7 +24,6 @@ services:
     volumes:
       - './db/data:/var/lib/mysql'
       - './db/my.cnf:/etc/mysql/conf.d/my.cnf'
-    # MYSQL_ROOT_PASSWORDのみをenvファイルで設定
     env_file:
       - variables.env
     ports:
