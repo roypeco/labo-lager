@@ -1,4 +1,4 @@
 FROM golang:1.22.1
-WORKDIR /app/go
-COPY ./ ./go
+WORKDIR /app/go-app
+COPY ./ ./go-app
 # ENTRYPOINT [ "go", "run", "main.go" ]
