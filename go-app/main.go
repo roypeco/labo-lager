@@ -1,10 +1,11 @@
 package main
 
 import (
-    "net/http"
-    "github.com/labstack/echo/v4"
-    "github.com/labstack/echo/v4/middleware"
-    "go-app/PackagesLogin"
+	"go-app/Cruds"
+	"go-app/PackagesLogin"
+	"net/http"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -14,7 +15,7 @@ func main() {
     e.GET("/", func(c echo.Context) error {
         return c.String(http.StatusOK, "Hello, World!")
     })
-    e.GET("/register", PackagesLogin.RegisterUser)
+    e.POST("/register", Cruds.RegisterUser)
     e.GET("/login", PackagesLogin.Login)
     e.Logger.Fatal(e.Start(":8000"))
 }
