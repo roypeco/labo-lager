@@ -1,0 +1,20 @@
+{
+  "name": "labo-lager",
+  "version": "0.0.1",
+  "license": "MIT",
+  "packageManager": "yarn@4.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "lint": "biome lint --apply ./src",
+    "format": "biome format --write ./src"
+  },
+  "dependencies": {
+    "@biomejs/biome": "^1.7.1",
+    "@types/node": "^20.12.7",
+    "@types/react": "^18.2.79",
+    "next": "^14.2.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.4.5"
+  }
+}
