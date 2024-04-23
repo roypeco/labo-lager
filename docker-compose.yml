@@ -16,8 +16,12 @@ services:
       - '8000:8000'
     env_file:
       - ./variables.env
+    depends_on:
+      - db
     volumes:
       - './go-app:/app/go-app'
+    networks:
+      - golang_networks
     tty: true
     stdin_open: true
 
@@ -31,3 +35,9 @@ services:
       - variables.env
     ports:
       - '3306:3306'
+    networks:
+      - golang_networks
+
+networks:
+  golang_networks:
+    external: true
