@@ -1,7 +1,6 @@
 package Cruds
 
 import (
-	// "encoding/json"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"gorm.io/driver/mysql"
@@ -9,11 +8,6 @@ import (
 	"os"
 	"fmt"
 )
-
-type User struct {
-	Username string `json:"username"`
-	Pass_Hash string `json:"pass_hash"` 
-}
 
 func RegisterUser(c echo.Context) error {
 	u := new(User)
@@ -35,5 +29,23 @@ func RegisterUser(c echo.Context) error {
 		return err
 	}
 
+	return c.String(http.StatusOK, "success")
+}
+
+func MakeYouOwner(c echo.Context) error {
+	u := User{}
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+        os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+    )
+	if err := c.Bind(&u); err != nil {
+		return err
+	}
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+    if err != nil {
+        panic(err.Error())
+    }
+	db.Where("username = ?", u.UserName).First(&u)
+	u.IsOwner = true
+	db.Save(&u)
 	return c.String(http.StatusOK, "success")
 }

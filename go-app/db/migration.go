@@ -1,51 +1,83 @@
 package main
 
 import (
-    "database/sql"
     "fmt"
     "os"
+    "gorm.io/driver/mysql"
+	"gorm.io/gorm"
     _ "github.com/go-sql-driver/mysql"
 )
 
+type User struct {
+    ID          uint
+    UserName    string      `gorm:"unique; not null"`
+    IsOwner     bool        `gorm:"default 0"`
+    UserStoreID uint
+    UserStore   UserStore
+    Stores      []*Store    `gorm:"many2many:user_stores;"`
+}
+
+type Auth struct {
+    ID          uint
+    PassHash    string
+    UserID      int         `gorm:"not null"`
+    User        User
+}
+
+type Item struct {
+    ID          uint
+    ItemName    string
+    Price       int
+    JanCode     string
+    Num         int
+    UserId      int         `gorm:"not null"`
+    User        User
+    StoreID     int         `gorm:"not null"`
+    Store       Store
+}
+
+type Store struct {
+    ID          uint
+    StoreName   string
+    Description string
+    UserStoreID uint        `gorm:"not null"`
+    UserStore   UserStore
+    Users       []*User     `gorm:"many2many:user_stores"`
+}
+
+type History struct {
+    ID          uint
+    ItemName    string
+    Num         int
+    Price       int
+    UserID      int         `gorm:"not null"`
+    User        User
+    ItemID      int         `gorm:"not null"`
+    Item        Item
+}
+
+type UserStore struct {
+    ID          uint
+    UserID      uint        `gorm:"not null"`
+    StoreID     uint        `gorm:"not null"`
+    Roll        string      `gorm:"size:15"`
+}
+
+
 func main() {
     // MySQLへの接続情報
-    dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+    dsn := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
         os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
     )
 
-    // MySQLに接続
-    db, err := sql.Open("mysql", dataSourceName)
+    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
     if err != nil {
-        panic(err.Error())
-    }
-    defer db.Close()
-
-    // テーブル削除のSQLクエリ
-    dropTableSQL := `
-        DROP TABLE IF EXISTS users;
-    `
-
-    // 既存のテーブルがあれば削除
-    _, err = db.Exec(dropTableSQL)
-    if err != nil {
-        panic(err.Error())
+        panic("failed to connect database")
     }
 
-    // テーブル作成のSQLクエリ
-    createTableSQL := `
-        CREATE TABLE users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(50) NOT NULL UNIQUE,
-            pass_hash VARCHAR(100) NOT NULL,
-            is_owner BOOLEAN DEFAULT 0
-        );
-    `
-
-    // テーブル作成のSQLクエリを実行
-    _, err = db.Exec(createTableSQL)
-    if err != nil {
-        panic(err.Error())
-    }
+    // マイグレーションを実行してテーブルを作成
+    db.Migrator().DropTable(&User{}, &Item{}, &Store{}, &History{}, &Auth{}, &UserStore{})
+    db.AutoMigrate(&User{}, &Item{}, &Store{}, &History{}, &Auth{}, &UserStore{})
 
     fmt.Println("テーブルが作成されました。")
 }
