@@ -1,9 +1,6 @@
 package Cruds
 
-import (
-
-)
-
+// SQL Table Models
 type User struct {
     ID          uint		`gorm:"column:id"`
     UserName    string      `gorm:"column:user_name" json:"username"`
@@ -13,7 +10,7 @@ type User struct {
 
 type Auth struct {
     ID          uint		`gorm:"column:id"`
-    PassHash    string		`gorm:"column:pass_hash"`
+    PassHash    string		`gorm:"column:pass_hash" json:"pass"`
     UserID      int         `gorm:"column:user_id"`
 }
 
@@ -48,4 +45,10 @@ type UserStore struct {
     UserID      uint        `gorm:"column:user_id"`
     StoreID     uint        `gorm:"column:store_id"`
     Roll        string      `gorm:"column:roll"`
+}
+
+// JSON Request Structs
+type RegistUserRequest struct {
+	UserName    string      `json:"username"`
+	Pass        string      `json:"pass"`
 }
