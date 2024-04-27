@@ -1,14 +1,15 @@
 package Cruds
 
 import (
-	"github.com/labstack/echo/v4"
+	"crypto/sha256"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+
+	"github.com/labstack/echo/v4"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"os"
-	"io"
-	"fmt"
-	"crypto/sha256"
 )
 
 func RegisterUser(c echo.Context) error {
@@ -96,3 +97,5 @@ func CreateStore(c echo.Context) error {
 	db.Save(&s)
 	return c.String(http.StatusOK, "success")
 }
+
+
