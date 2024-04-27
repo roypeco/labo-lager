@@ -31,9 +31,9 @@ cd db && go build migration.go
 ### バックエンド
 
 - [x] ユーザ登録　POST:/register/user {username:str, pass:str}
-- [ ] オーナー登録(店を経営する人)　PUT:/register/user {username:str}
-- [ ] 商品登録　POST:/register/item {検討中}
-- [ ] 商品購入　PUT:/(検討中)
+- [x] オーナー登録(店を経営する人)　POST:/register/store {username:str, storename:str, description:str}
+- [ ] 商品登録　POST:/register/item {username:str, storename:str, itemname:str, category:str, price:int, jancode:str, num:int}
+- [ ] 商品購入　POST:/(検討中)
 - [ ] 商品補充　(検討中)
 
 ### フロントエンド
