@@ -88,13 +88,13 @@ func CreateStore(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
-	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
-	u.UserStoreID = us.ID
-	u.IsOwner = true
-	s.UserStoreID = us.ID
+	// db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
+	// u.UserStoreID = us.ID
+	// u.IsOwner = true
+	// s.UserStoreID = us.ID
 
-	db.Save(&u)
-	db.Save(&s)
+	// db.Save(&u)
+	// db.Save(&s)
 	return c.String(http.StatusOK, "success")
 }
 
@@ -131,6 +131,38 @@ func RegisterItem(c echo.Context) error {
 	i.UserId = int(u.ID)
 	i.StoreID = int(s.ID)
 	err = db.Create(&i).Error
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return c.String(http.StatusOK, "success")
+}
+
+func AddUserToStore(c echo.Context) error {
+	u := User{}
+	s := Store{}
+	us := UserStore{}
+	r := AddUserToStoreRequest{}
+	if err := c.Bind(&r); err != nil {
+		return err
+	}
+	u.UserName = r.UserName
+	s.StoreName = r.StoreName
+	us.Roll = r.Roll
+
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Where("user_name = ?", u.UserName).First(&u)
+	db.Where("store_name = ?", s.StoreName).First(&s)
+	us.UserID = u.ID
+	us.StoreID = s.ID
+	db.Save(&u)
+	err = db.Create(&us).Error
 	if err != nil {
 		panic(err.Error())
 	}

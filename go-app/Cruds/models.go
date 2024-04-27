@@ -4,8 +4,8 @@ package Cruds
 type User struct {
 	ID          uint   `gorm:"column:id"`
 	UserName    string `gorm:"column:user_name" json:"username"`
-	IsOwner     bool   `gorm:"column:is_owner"`
-	UserStoreID uint   `gorm:"column:user_store_id"`
+	// IsOwner     bool   `gorm:"column:is_owner"`
+	// UserStoreID uint   `gorm:"column:user_store_id"`
 }
 
 type Auth struct {
@@ -29,7 +29,7 @@ type Store struct {
 	ID          uint   `gorm:"column:id"`
 	StoreName   string `gorm:"column:store_name"`
 	Description string `gorm:"column:description"`
-	UserStoreID uint   `gorm:"column:user_store_id"`
+	// UserStoreID uint   `gorm:"column:user_store_id"`
 }
 
 type History struct {
@@ -68,4 +68,10 @@ type RegisterItemRequest struct {
 	Price     int    `json:"price"`
 	JanCode   string `json:"jancode"`
 	Num       int    `json:"num"`
+}
+
+type AddUserToStoreRequest struct {
+	UserName  string `json:"username"`
+	StoreName string `json:"storename"`
+	Roll      string `json:"roll"`
 }
