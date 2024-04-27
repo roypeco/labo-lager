@@ -52,3 +52,9 @@ type RegistUserRequest struct {
 	UserName    string      `json:"username"`
 	Pass        string      `json:"pass"`
 }
+
+type CreateStoreRequest struct {
+    UserName    string      `json:"username"`
+    StoreName   string      `json:"storename"`
+    Description string      `json:"description"`
+}

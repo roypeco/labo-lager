@@ -16,7 +16,7 @@ func main() {
         return c.String(http.StatusOK, "Hello, World!")
     })
     e.POST("/register/user", Cruds.RegisterUser)
-    e.PUT("/register/user", Cruds.MakeYouOwner)
+    e.POST("/register/store", Cruds.CreateStore)
     // e.POST("/register/item", Cruds.RegisterUser)
     e.GET("/login", PackagesLogin.Login)
     e.Logger.Fatal(e.Start(":8000"))

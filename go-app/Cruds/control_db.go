@@ -53,20 +53,46 @@ func RegisterUser(c echo.Context) error {
 	return c.String(http.StatusOK, "success")
 }
 
-func MakeYouOwner(c echo.Context) error {
+func CreateStore(c echo.Context) error {
 	u := User{}
+	s := Store{}
+	us := UserStore{}
+	r := CreateStoreRequest{}
+	if err := c.Bind(&r); err != nil {
+		return err
+	}
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
         os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
     )
-	if err := c.Bind(&u); err != nil {
-		return err
-	}
+	u.UserName = r.UserName
+	s.StoreName = r.StoreName
+	s.Description = r.Description
+	
 	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
     if err != nil {
-        panic(err.Error())
+		panic(err.Error())
     }
-	db.Where("username = ?", u.UserName).First(&u)
+
+	err = db.Create(&s).Error
+    if err != nil {
+		panic(err.Error())
+    }
+	fmt.Printf("%+v", r)
+	db.Where("user_name = ?", u.UserName).First(&u)
+	db.Where("store_name = ?", s.StoreName).First(&s)
+	us.UserID = u.ID
+	us.StoreID = s.ID
+	us.Roll = "M"
+	err = db.Create(&us).Error
+    if err != nil {
+		panic(err.Error())
+    }
+	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
+	u.UserStoreID = us.ID
 	u.IsOwner = true
+	s.UserStoreID = us.ID
+
 	db.Save(&u)
+	db.Save(&s)
 	return c.String(http.StatusOK, "success")
 }

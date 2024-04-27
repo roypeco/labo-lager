@@ -11,7 +11,7 @@ import (
 type User struct {
     ID          uint
     UserName    string      `gorm:"unique; not null"`
-    IsOwner     bool        `gorm:"default 0"`
+    IsOwner     bool        `gorm:"default:0"`
     UserStoreID uint
     UserStore   UserStore
     Stores      []*Store    `gorm:"many2many:user_stores;"`
@@ -30,6 +30,7 @@ type Item struct {
     Price       int
     JanCode     string
     Num         int
+    Category    string      `gorm:"default:other"`
     UserId      int         `gorm:"not null"`
     User        User
     StoreID     int         `gorm:"not null"`
@@ -40,7 +41,7 @@ type Store struct {
     ID          uint
     StoreName   string
     Description string
-    UserStoreID uint        `gorm:"not null"`
+    UserStoreID uint
     UserStore   UserStore
     Users       []*User     `gorm:"many2many:user_stores"`
 }
