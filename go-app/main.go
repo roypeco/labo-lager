@@ -18,7 +18,7 @@ func main() {
     })
     e.POST("/register/user", Cruds.RegisterUser)
     e.POST("/register/store", Cruds.CreateStore)
-    // e.POST("/register/item", Cruds.RegisterUser)
+    e.POST("/register/item", Cruds.RegisterItem)
     e.GET("/login", PackagesLogin.Login)
     e.Logger.Fatal(e.Start(":8000"))
 }

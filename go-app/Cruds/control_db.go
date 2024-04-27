@@ -23,12 +23,12 @@ func RegisterUser(c echo.Context) error {
 	h := sha256.New()
 	io.WriteString(h, r.Pass)
 
-	pw_sha256 :=fmt.Sprintf("%x", h.Sum(nil))
+	pw_sha256 := fmt.Sprintf("%x", h.Sum(nil))
 	salt := os.Getenv("SALT")
 	io.WriteString(h, salt)
 	io.WriteString(h, pw_sha256)
 	a.PassHash = fmt.Sprintf("%x", h.Sum(nil))
-	
+
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
 	)
@@ -62,22 +62,22 @@ func CreateStore(c echo.Context) error {
 	if err := c.Bind(&r); err != nil {
 		return err
 	}
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-        os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-    )
 	u.UserName = r.UserName
 	s.StoreName = r.StoreName
 	s.Description = r.Description
-	
+
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
 	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-    if err != nil {
+	if err != nil {
 		panic(err.Error())
-    }
+	}
 
 	err = db.Create(&s).Error
-    if err != nil {
+	if err != nil {
 		panic(err.Error())
-    }
+	}
 	fmt.Printf("%+v", r)
 	db.Where("user_name = ?", u.UserName).First(&u)
 	db.Where("store_name = ?", s.StoreName).First(&s)
@@ -85,9 +85,9 @@ func CreateStore(c echo.Context) error {
 	us.StoreID = s.ID
 	us.Roll = "M"
 	err = db.Create(&us).Error
-    if err != nil {
+	if err != nil {
 		panic(err.Error())
-    }
+	}
 	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
 	u.UserStoreID = us.ID
 	u.IsOwner = true
@@ -98,4 +98,42 @@ func CreateStore(c echo.Context) error {
 	return c.String(http.StatusOK, "success")
 }
 
+func RegisterItem(c echo.Context) error {
+	i := Item{}
+	u := User{}
+	us := UserStore{}
+	s := Store{}
+	r := RegisterItemRequest{}
+	if err := c.Bind(&r); err != nil {
+		return err
+	}
+	i.ItemName = r.ItemName
+	i.JanCode = r.JanCode
+	i.Num = r.Num
+	i.Price = r.Price
+	i.Category = r.Category
+	s.StoreName = r.StoreName
+	u.UserName = r.UserName
 
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Where("user_name = ?", u.UserName).First(&u)
+	db.Where("store_name = ?", s.StoreName).First(&s)
+	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
+	if us.Roll != "M" {
+		return c.String(http.StatusOK, "permission error")
+	}
+	i.UserId = int(u.ID)
+	i.StoreID = int(s.ID)
+	err = db.Create(&i).Error
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return c.String(http.StatusOK, "success")
+}
