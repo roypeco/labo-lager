@@ -20,6 +20,7 @@ func main() {
     e.PUT("/register/user", Cruds.AddUserToStore)
     e.POST("/register/store", Cruds.CreateStore)
     e.POST("/register/item", Cruds.RegisterItem)
+    e.POST("/buy", Cruds.BuyItem)
     e.GET("/login", PackagesLogin.Login)
     e.Logger.Fatal(e.Start(":8000"))
 }

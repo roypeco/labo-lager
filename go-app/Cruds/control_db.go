@@ -44,7 +44,7 @@ func RegisterUser(c echo.Context) error {
 	}
 
 	db.Where("user_name = ?", u.UserName).First(&u)
-	a.UserID = int(u.ID)
+	a.UserID = uint(u.ID)
 	err = db.Create(&a).Error
 	if err != nil {
 		fmt.Printf("Create user with related data error: %s", err.Error())
@@ -128,8 +128,8 @@ func RegisterItem(c echo.Context) error {
 	if us.Roll != "M" {
 		return c.String(http.StatusOK, "permission error")
 	}
-	i.UserId = int(u.ID)
-	i.StoreID = int(s.ID)
+	i.UserId = uint(u.ID)
+	i.StoreID = uint(s.ID)
 	err = db.Create(&i).Error
 	if err != nil {
 		panic(err.Error())
@@ -166,6 +166,55 @@ func AddUserToStore(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	return c.String(http.StatusOK, "success")
+}
+
+func BuyItem(c echo.Context) error {
+	u := User{}
+	s := Store{}
+	i := Item{}
+	h := History{}
+	us := UserStore{}
+	r := BuyItemRequest{}
+	if err := c.Bind(&r); err != nil {
+		return err
+	}
+	u.UserName = r.UserName
+	s.StoreName = r.StoreName
+	i.ID = uint(r.ItemID)
+	h.Num = r.Num
+
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Where("user_name = ?", u.UserName).First(&u)
+	db.Where("store_name = ?", s.StoreName).First(&s)
+	db.Where("id = ?", i.ID).First(&i)
+	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
+
+	if us.Roll != "M" && us.Roll != "C" {
+		return c.String(http.StatusOK, "permission error")
+	}
+	if i.Num < r.Num {
+		return c.String(http.StatusOK, "out of stock")
+	}
+	h.ItemName = i.ItemName
+	h.Price = i.Price*r.Num
+	h.StoreID = uint(s.ID)
+	h.UserID = uint(u.ID)
+	h.SellerID = uint(i.UserId)
+	i.Num = i.Num - r.Num
+	err = db.Create(&h).Error
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Save(&i)
+
 
 	return c.String(http.StatusOK, "success")
 }
