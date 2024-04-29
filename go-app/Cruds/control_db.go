@@ -252,3 +252,38 @@ func ReplenishmentItem(c echo.Context) error {
 
 	return c.String(http.StatusOK, "succsess")
 }
+
+func Login(c echo.Context) error {
+	u := User{}
+	a := Auth{}
+	r := LoginRequest{}
+	if err := c.Bind(&r); err != nil {
+		return err
+	}
+	u.UserName = r.UserName
+	
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Where("user_name = ?", u.UserName).First(&u)
+	a.UserID = u.ID
+	db.Where("user_id = ?", u.ID).First(&a)
+
+	h := sha256.New()
+	io.WriteString(h, r.Pass)
+
+	pw_sha256 := fmt.Sprintf("%x", h.Sum(nil))
+	salt := os.Getenv("SALT")
+	io.WriteString(h, salt)
+	io.WriteString(h, pw_sha256)
+	check_hash := fmt.Sprintf("%x", h.Sum(nil))
+	if check_hash != a.PassHash {
+		return c.String(http.StatusOK, "not correct")
+	}
+	
+	return c.String(http.StatusOK, "success")
+}

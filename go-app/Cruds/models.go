@@ -90,3 +90,8 @@ type ReplenishmentItemRequest struct {
 	ItemID    uint   `jsoon:"itemid"`
 	Num       int    `json:"num"`
 }
+
+type LoginRequest struct {
+	UserName string `json:"username"`
+	Pass string `json:"pass"`
+}

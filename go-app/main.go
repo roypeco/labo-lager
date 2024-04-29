@@ -2,7 +2,6 @@ package main
 
 import (
 	"go-app/Cruds"
-	"go-app/Login"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -22,6 +21,6 @@ func main() {
     e.POST("/register/item", Cruds.RegisterItem)
     e.POST("/register/replenishment", Cruds.ReplenishmentItem)
     e.POST("/buy", Cruds.BuyItem)
-    e.POST("/login", Login.Login)
+    e.POST("/login", Cruds.Login)
     e.Logger.Fatal(e.Start(":8000"))
 }
