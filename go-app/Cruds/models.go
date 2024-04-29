@@ -83,3 +83,10 @@ type BuyItemRequest struct {
 	ItemID    uint   `json:"itemid"`
 	Num       int    `json:"num"`
 }
+
+type ReplenishmentItemRequest struct {
+	Username  string `json:"username"`
+	StoreName string `json:"storename"`
+	ItemID    uint   `jsoon:"itemid"`
+	Num       int    `json:"num"`
+}

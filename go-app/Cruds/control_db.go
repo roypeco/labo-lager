@@ -218,3 +218,37 @@ func BuyItem(c echo.Context) error {
 
 	return c.String(http.StatusOK, "success")
 }
+
+func ReplenishmentItem(c echo.Context) error {
+	u := User{}
+	i := Item{}
+	s := Store{}
+	us := UserStore{}
+	r := ReplenishmentItemRequest{}
+	if err := c.Bind(&r); err != nil {
+		return err
+	}
+	u.UserName = r.Username
+	i.ID = r.ItemID
+	s.StoreName = r.StoreName
+
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Where("user_name = ?", u.UserName).First(&u)
+	db.Where("store_name = ?", s.StoreName).First(&s)
+	db.Where("id = ?", i.ID).First(&i)
+	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
+
+	if us.Roll != "M" || i.UserId != u.ID{
+		return c.String(http.StatusOK, "permission error")
+	}
+	i.Num += r.Num
+	db.Save(&i)
+
+	return c.String(http.StatusOK, "succsess")
+}
