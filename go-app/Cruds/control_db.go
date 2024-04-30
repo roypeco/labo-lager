@@ -287,3 +287,38 @@ func Login(c echo.Context) error {
 	
 	return c.String(http.StatusOK, "success")
 }
+
+
+func GetStock(c echo.Context) error {
+	s := Store{}
+	items := []Item{}
+	s.StoreName = c.Param("storename")
+
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Where("store_name = ?", s.StoreName).First(&s)
+	db.Where("store_id = ? AND num > ?", s.ID, 0).Find(&items)
+	return c.JSON(http.StatusOK, items)
+}
+
+func GetAllStock(c echo.Context) error {
+	s := Store{}
+	items := []Item{}
+	s.StoreName = c.Param("storename")
+
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Where("store_name = ?", s.StoreName).First(&s)
+	db.Where("store_id = ?", s.ID).Find(&items)
+	return c.JSON(http.StatusOK, items)
+}

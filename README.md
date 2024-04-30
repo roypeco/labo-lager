@@ -37,6 +37,8 @@ cd db && go build migration.go
 - [x] 商品購入　POST:/buy {username:str, storename:str, itemid:int, num:int}
 - [x] 商品補充　POST:/register/replenishment {username:str, storename:str, itemid:int, num:int}
 - [x] ログイン POST:/login {username:str, pass:str}
+- [x] 店舗の商品一覧取得 GET:/stock/:storename
+- [x] 店舗の商品一覧取得(在庫0も含む) GET:/stock_all/:storename
 
 ### フロントエンド
 

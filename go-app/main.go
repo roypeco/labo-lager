@@ -22,5 +22,7 @@ func main() {
     e.POST("/register/replenishment", Cruds.ReplenishmentItem)
     e.POST("/buy", Cruds.BuyItem)
     e.POST("/login", Cruds.Login)
+    e.GET("/stock/:storename", Cruds.GetStock)
+    e.GET("/stock_all/:storename", Cruds.GetAllStock)
     e.Logger.Fatal(e.Start(":8000"))
 }
