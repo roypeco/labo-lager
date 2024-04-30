@@ -162,7 +162,15 @@ func AddUserToStore(c echo.Context) error {
 	us.UserID = u.ID
 	us.StoreID = s.ID
 	db.Save(&u)
-	err = db.Create(&us).Error
+	err = db.Where("user_id = ? AND store_id = ?", u.ID, s.ID).First(&us).Error
+	if err != nil {
+		err = db.Create(&us).Error
+		if err != nil {
+			panic(err.Error())
+		}
+	}
+	us.Roll = r.Roll
+	err = db.Save(&us).Error
 	if err != nil {
 		panic(err.Error())
 	}
@@ -321,4 +329,8 @@ func GetAllStock(c echo.Context) error {
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	db.Where("store_id = ?", s.ID).Find(&items)
 	return c.JSON(http.StatusOK, items)
+}
+
+func HealthCheck(c echo.Context) error {
+	return c.String(http.StatusOK, "Server is running")
 }

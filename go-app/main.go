@@ -15,6 +15,7 @@ func main() {
     e.GET("/", func(c echo.Context) error {
         return c.String(http.StatusOK, "Hello, World!")
     })
+    e.GET("/health_check", Cruds.HealthCheck)
     e.POST("/register/user", Cruds.RegisterUser)
     e.PUT("/register/user", Cruds.AddUserToStore)
     e.POST("/register/store", Cruds.CreateStore)
