@@ -1,4 +1,6 @@
 import * as React from 'react';
+import Image from "next/image";
+import logoImage from "../../public/img/Labolager.png";
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -36,9 +38,9 @@ export default function DrawerAppBar(props: Props) {
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-        <a href='./'>
-          LaboLager
-        </a>
+          <a href='./'>
+            <Image src={logoImage} alt='ロゴ画像' width='200' height='35' fetchPriority='high' loading='lazy' />
+          </a>
       </Typography>
       <Divider />
       <List>
@@ -73,7 +75,7 @@ export default function DrawerAppBar(props: Props) {
             sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
           >
             <a href='./'>
-              LaboLager
+              <Image src={logoImage} alt='ロゴ画像' width='200' height='35' fetchPriority='high' loading='lazy' />
             </a>
           </Typography>
           <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
