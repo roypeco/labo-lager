@@ -93,5 +93,11 @@ type ReplenishmentItemRequest struct {
 
 type LoginRequest struct {
 	UserName string `json:"username"`
-	Pass string `json:"pass"`
+	Pass     string `json:"pass"`
+}
+
+// JSON Response Structs
+
+type Message struct {
+	Content string `json:"content"`
 }

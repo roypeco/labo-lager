@@ -16,6 +16,8 @@ func RegisterUser(c echo.Context) error {
 	u := new(User)
 	a := new(Auth)
 	r := new(RegistUserRequest)
+	m := new(Message)
+	UsernameLSlice := []User{}
 	if err := c.Bind(r); err != nil {
 		return err
 	}
@@ -37,6 +39,15 @@ func RegisterUser(c echo.Context) error {
 		return err
 	}
 
+	// usernameが既に存在するかの確認
+	db.Find(&UsernameLSlice)
+	for _, user := range UsernameLSlice {
+        if user.UserName == r.UserName {
+            m.Content = "already exist"
+            return c.JSON(http.StatusOK, m)
+        }
+    }
+
 	err = db.Create(&u).Error
 	if err != nil {
 		fmt.Printf("Create user with related data error: %s", err.Error())
@@ -51,7 +62,7 @@ func RegisterUser(c echo.Context) error {
 		return err
 	}
 
-	return c.String(http.StatusOK, "success")
+	return c.JSON(http.StatusOK, u)
 }
 
 func CreateStore(c echo.Context) error {
