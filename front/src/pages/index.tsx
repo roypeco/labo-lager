@@ -1,22 +1,42 @@
-import DrawerAppBar from "@/components/DrawerAppBar";
-import Box from '@mui/material/Box';
-
+import { useEffect, useState } from 'react';
+import Cookies from 'js-cookie';
+import DrawerAppBar from '@/components/DrawerAppBar'; // ここが正しいコンポーネントを指しているか確認してください
+import Box from '@mui/material/Box'; // @mui/material がインストールされていることを確認してください
 
 const Index = () => {
-	return (
-		<div>
-			<DrawerAppBar/>
-			<Box
-				sx={{
-					marginTop: 15,
-					display: 'flex',
-					flexDirection: 'column',
-            		alignItems: 'center',
-				}}>
-				<a href="/login">Login Page</a>
-			</Box>
-		</div>
-	);
+  const [username, setUsername] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const usernameFromCookie = Cookies.get('username');
+    setUsername(usernameFromCookie || '');
+    setLoading(false);
+  }, []);
+
+  return (
+    <div>
+      <DrawerAppBar />
+      <Box
+        sx={{
+          marginTop: 15,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <a href="/signup">Sign up Page</a>
+      </Box>
+      {!loading ? (
+        username ? (
+          <Box>{username}</Box>
+        ) : (
+          <Box>usernameないよ</Box>
+        )
+      ) : (
+        <Box>Loading...</Box>
+      )}
+    </div>
+  );
 };
 
 export default Index;
