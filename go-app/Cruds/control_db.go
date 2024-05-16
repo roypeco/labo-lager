@@ -6,7 +6,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -42,11 +45,11 @@ func RegisterUser(c echo.Context) error {
 	// usernameが既に存在するかの確認
 	db.Find(&UsernameLSlice)
 	for _, user := range UsernameLSlice {
-        if user.UserName == r.UserName {
-            m.Content = "already exist"
-            return c.JSON(http.StatusOK, m)
-        }
-    }
+		if user.UserName == r.UserName {
+			m.Content = "already exist"
+			return c.JSON(http.StatusOK, m)
+		}
+	}
 
 	err = db.Create(&u).Error
 	if err != nil {
@@ -223,7 +226,7 @@ func BuyItem(c echo.Context) error {
 		return c.String(http.StatusOK, "out of stock")
 	}
 	h.ItemName = i.ItemName
-	h.Price = i.Price*r.Num
+	h.Price = i.Price * r.Num
 	h.StoreID = uint(s.ID)
 	h.UserID = uint(u.ID)
 	h.SellerID = uint(i.UserId)
@@ -233,7 +236,6 @@ func BuyItem(c echo.Context) error {
 		panic(err.Error())
 	}
 	db.Save(&i)
-
 
 	return c.String(http.StatusOK, "success")
 }
@@ -263,7 +265,7 @@ func ReplenishmentItem(c echo.Context) error {
 	db.Where("id = ?", i.ID).First(&i)
 	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
 
-	if us.Roll != "M" || i.UserId != u.ID{
+	if us.Roll != "M" || i.UserId != u.ID {
 		return c.String(http.StatusOK, "permission error")
 	}
 	i.Num += r.Num
@@ -280,7 +282,7 @@ func Login(c echo.Context) error {
 		return err
 	}
 	u.UserName = r.UserName
-	
+
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
 	)
@@ -303,10 +305,24 @@ func Login(c echo.Context) error {
 	if check_hash != a.PassHash {
 		return c.String(http.StatusOK, "not correct")
 	}
-	
-	return c.String(http.StatusOK, "success")
-}
 
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userid": u.ID,
+		"exp":    time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return c.JSON(http.StatusInternalServerError, gin.H{"error": "JWT Secret not found"})
+	}
+
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while generating token"})
+	}
+
+	return c.JSON(http.StatusOK, gin.H{"token": tokenString})
+}
 
 func GetStock(c echo.Context) error {
 	s := Store{}
@@ -340,6 +356,17 @@ func GetAllStock(c echo.Context) error {
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	db.Where("store_id = ?", s.ID).Find(&items)
 	return c.JSON(http.StatusOK, items)
+}
+
+func WhoAmI(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+    claims := user.Claims.(jwt.MapClaims)
+    userID := claims["userid"].(string)
+
+    return c.JSON(http.StatusOK, map[string]string{
+        "message": "You are authenticated",
+        "userid":  userID,
+    })
 }
 
 func HealthCheck(c echo.Context) error {
