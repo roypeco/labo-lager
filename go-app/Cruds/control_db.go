@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -370,5 +371,6 @@ func WhoAmI(c echo.Context) error {
 }
 
 func HealthCheck(c echo.Context) error {
+	log.Println("healthcheckが実行されました")
 	return c.String(http.StatusOK, "Server is running")
 }

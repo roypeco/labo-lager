@@ -13,7 +13,10 @@ import (
 func main() {
     e := echo.New()
     e.Use(middleware.CORS())
-    e.Use(middleware.Logger())
+    e.Use(middleware.Recover())
+    e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+        Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header:my-header}` + "\n",
+    }))
 
     jwtSecret := os.Getenv("JWT_SECRET")
     if jwtSecret == "" {
@@ -23,6 +26,7 @@ func main() {
     config := echojwt.Config{
         SigningKey: []byte(jwtSecret),
         ContextKey: "user", 
+        TokenLookup: "header:Authorization",
     }
 
     e.GET("/", func(c echo.Context) error {
