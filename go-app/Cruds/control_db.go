@@ -4,10 +4,10 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -322,7 +322,9 @@ func Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while generating token"})
 	}
 
-	return c.JSON(http.StatusOK, gin.H{"token": tokenString})
+	return c.JSON(http.StatusOK, map[string]string{
+		"token": tokenString,
+	})
 }
 
 func GetStock(c echo.Context) error {
@@ -361,13 +363,15 @@ func GetAllStock(c echo.Context) error {
 
 func WhoAmI(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
-    claims := user.Claims.(jwt.MapClaims)
-    userID := claims["userid"].(string)
-
-    return c.JSON(http.StatusOK, map[string]string{
-        "message": "You are authenticated",
-        "userid":  userID,
-    })
+	if user == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
+	}
+	claims := user.Claims.(jwt.MapClaims)
+	userID := claims["userid"].(float64)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "You are authenticated",
+		"userid":  uint(userID),
+	})
 }
 
 func HealthCheck(c echo.Context) error {
