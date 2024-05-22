@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-app/Cruds"
+	"go-app/Auth"
 	"net/http"
 	"os"
 
@@ -43,9 +44,9 @@ func main() {
 	e.GET("/stock/:storename", Cruds.GetStock)
 	e.GET("/stock_all/:storename", Cruds.GetAllStock)
 
-	restricted := e.Group("/whoami")
+	restricted := e.Group("/restricted")
 	restricted.Use(echojwt.WithConfig(config))
-	restricted.GET("", Cruds.WhoAmI)
+	restricted.GET("/whoami", Auth.WhoAmI)
 
 	e.Logger.Fatal(e.Start(":8000"))
 }

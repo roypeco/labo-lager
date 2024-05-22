@@ -361,19 +361,6 @@ func GetAllStock(c echo.Context) error {
 	return c.JSON(http.StatusOK, items)
 }
 
-func WhoAmI(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	if user == nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
-	}
-	claims := user.Claims.(jwt.MapClaims)
-	userID := claims["userid"].(float64)
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "You are authenticated",
-		"userid":  uint(userID),
-	})
-}
-
 func HealthCheck(c echo.Context) error {
 	log.Println("healthcheckが実行されました")
 	return c.String(http.StatusOK, "Server is running")
