@@ -20,11 +20,4 @@ func WhoAmI(c echo.Context) error {
 	})
 }
 
-func IsValid(token *jwt.Token) int {
-	if token == nil {
-		return -1
-	}
-	claims := token.Claims.(jwt.MapClaims)
-	userID := claims["userid"].(float64)
-	return int(userID)
-}
+

@@ -70,6 +70,7 @@ func RegisterUser(c echo.Context) error {
 }
 
 func CreateStore(c echo.Context) error {
+	token := c.Get("user").(*jwt.Token)
 	u := User{}
 	s := Store{}
 	us := UserStore{}
@@ -88,13 +89,16 @@ func CreateStore(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+	db.Where("user_name = ?", u.UserName).First(&u)
+	if !(IsValid(token, int(u.ID))) {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
+	}
 
 	err = db.Create(&s).Error
 	if err != nil {
 		panic(err.Error())
 	}
-	fmt.Printf("%+v", r)
-	db.Where("user_name = ?", u.UserName).First(&u)
+	// fmt.Printf("%+v", r)
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	us.UserID = u.ID
 	us.StoreID = s.ID
@@ -323,7 +327,7 @@ func Login(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
-		"token": tokenString,
+		"token":    tokenString,
 		"username": u.UserName,
 	})
 }
@@ -365,4 +369,17 @@ func GetAllStock(c echo.Context) error {
 func HealthCheck(c echo.Context) error {
 	log.Println("healthcheckが実行されました")
 	return c.String(http.StatusOK, "Server is running")
+}
+
+func IsValid(token *jwt.Token, uid int) bool {
+	if token == nil {
+		return false
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	userID := claims["userid"].(float64)
+	if int(userID) == uid {
+		return true
+	} else {
+		return false
+	}
 }
