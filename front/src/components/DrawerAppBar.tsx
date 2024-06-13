@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Link from 'next/link';
 import Image from "next/image";
 import logoImage from "../../public/img/Labolager.png";
 import AppBar from '@mui/material/AppBar';
@@ -38,17 +39,27 @@ export default function DrawerAppBar(props: Props) {
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-          <a href='./'>
+          <Link href="/">
             <Image src={logoImage} alt='ロゴ画像' width='200' height='35' fetchPriority='high' loading='lazy' />
-          </a>
+          </Link>
       </Typography>
       <Divider />
       <List>
-        {navItems.map((item) => (
-          <ListItem key={item} disablePadding>
-            <ListItemText primary={item} />
+          <ListItem key="Home" disablePadding>
+            <Link href="/">
+              <ListItemText primary="Home" />
+            </Link>
           </ListItem>
-        ))}
+          <ListItem key="Login" disablePadding>
+            <Link href="/login">
+              <ListItemText primary="Login" />
+            </Link>
+          </ListItem>
+          <ListItem key="Sign up" disablePadding>
+            <Link href="/signup">
+              <ListItemText primary="Sign up" />
+            </Link>
+          </ListItem>
       </List>
     </Box>
   );
@@ -56,7 +67,12 @@ export default function DrawerAppBar(props: Props) {
   const container = window !== undefined ? () => window().document.body : undefined;
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box
+      sx={{ 
+        display: 'flex',
+        marginBottom: 15,
+      }}
+    >
       <CssBaseline />
       <AppBar component="nav">
         <Toolbar>
@@ -74,16 +90,26 @@ export default function DrawerAppBar(props: Props) {
             component="div"
             sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
           >
-            <a href='./'>
+            <Link href="/">
               <Image src={logoImage} alt='ロゴ画像' width='200' height='35' fetchPriority='high' loading='lazy' />
-            </a>
+            </Link>
           </Typography>
           <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-            {navItems.map((item) => (
-              <Button key={item} sx={{ color: '#fff' }}>
-                {item}
+            <Link href="/">
+              <Button key="Home" sx={{ color: '#fff' }}>
+                Home
               </Button>
-            ))}
+            </Link>
+            <Link href="/login">
+              <Button key="login" sx={{ color: '#fff' }}>
+                Login
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button key="Sign up" sx={{ color: '#fff' }}>
+                Sign up
+              </Button>
+            </Link>
           </Box>
         </Toolbar>
       </AppBar>

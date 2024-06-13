@@ -21,7 +21,7 @@ const Index = () => {
       <DrawerAppBar />
       <Box
         sx={{
-          marginTop: 15,
+          // marginTop: 15,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -29,6 +29,7 @@ const Index = () => {
       >
         <a href="/signup">Sign up Page</a>
         <a href="/login">Login Page</a>
+        <a href={"/users/" + username}>User Page</a>
       </Box>
       {!loading ? (
         username ? (
