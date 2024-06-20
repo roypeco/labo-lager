@@ -1,11 +1,13 @@
+import * as React from 'react';
 import DrawerAppBar from "@/components/DrawerAppBar";
 import { TextField, Box, Button } from "@mui/material";
 
-const handleSubmit = () => {
-    
-}
 
 const register_store = () => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+    };
     return (
         <div className="parent">
             <DrawerAppBar />
@@ -25,8 +27,22 @@ const register_store = () => {
                     }}
                     >
                     <h1>新規店舗登録</h1>
-                    <TextField fullWidth label="店名" id="fullWidth" margin="normal" />
-                    <Button variant="outlined" size="large">登録</Button>
+                    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+                        <TextField
+                            fullWidth
+                            required
+                            label="店名"
+                            id="storename"
+                            margin="normal"
+                        />
+                        <Button
+                            variant="outlined"
+                            size="large"
+                            type="submit"
+                            >
+                            登録
+                        </Button>
+                    </Box>
                 </Box>
             </Box>
         </div>
