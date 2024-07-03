@@ -114,7 +114,7 @@ func CreateStore(c echo.Context) error {
 
 	// db.Save(&u)
 	// db.Save(&s)
-	return c.String(http.StatusOK, "success")
+	return c.JSON(http.StatusOK, map[string]string{"message": "success"})
 }
 
 func RegisterItem(c echo.Context) error {

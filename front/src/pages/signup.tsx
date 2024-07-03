@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Link from 'next/link'
 import Cookies from 'js-cookie';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -6,7 +7,6 @@ import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
@@ -105,12 +105,12 @@ export default function SignIn() {
             </Link>
             <Grid container>
               <Grid item xs>
-                <Link href="#" variant="body2">
+                <Link href="#">
                   Forgot pass?
                 </Link>
               </Grid>
               <Grid item>
-                <Link href="#" variant="body2">
+                <Link href="#">
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>
