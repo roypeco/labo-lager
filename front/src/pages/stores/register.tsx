@@ -1,11 +1,12 @@
 import * as React from 'react';
-import Link from 'next/link'
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import DrawerAppBar from "@/components/DrawerAppBar";
 import { TextField, Box, Button } from "@mui/material";
 
 const register_store = () => {
+    const router = useRouter();
     const [usernameFromCookie, setUsernameFromCookie] = useState<string | undefined>(undefined);
     const [jwtTokenFromCookie, setJwtTokenFromCookie] = useState<string | undefined>(undefined);
 
@@ -59,6 +60,7 @@ const register_store = () => {
         } catch (error) {
             console.error('Error:', error);
         }
+        router.push('/');
     };
 
     return (
@@ -108,15 +110,13 @@ const register_store = () => {
                             name="description"
                             margin="normal"
                         />
-                        <Link href="/">
-                            <Button
-                                variant="outlined"
-                                size="large"
-                                type="submit"
-                                >
-                                登録
-                            </Button>
-                        </Link>
+                        <Button
+                            variant="outlined"
+                            size="large"
+                            type="submit"
+                            >
+                            登録
+                        </Button>
                     </Box>
                 </Box>
             </Box>

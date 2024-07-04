@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useRouter } from 'next/router';
 import Link from 'next/link'
 import Cookies from 'js-cookie';
 import Avatar from '@mui/material/Avatar';
@@ -32,6 +33,8 @@ function Copyright(props: any) {
 const defaultTheme = createTheme();
 
 export default function SignIn() {
+  const router = useRouter();
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -39,14 +42,15 @@ export default function SignIn() {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(Object.fromEntries(data)),
-    })
+    });
     if (!response.ok) {
       console.log(`HTTP error! status: ${response.status}`);
-      return
-    } else{
+      return;
+    } else {
       const ResData = await response.json();
-      Cookies.set('jwt', ResData.token);
-      Cookies.set('username', ResData.username);
+      await Cookies.set('jwt', ResData.token);
+      await Cookies.set('username', ResData.username);
+      router.push('/');
     }
   };
 
@@ -93,16 +97,14 @@ export default function SignIn() {
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
             />
-            <Link href='/'>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-              >
-                Log in
-              </Button>
-            </Link>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+            >
+              Log in
+            </Button>
             <Grid container>
               <Grid item xs>
                 <Link href="#">
