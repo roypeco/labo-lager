@@ -60,7 +60,7 @@ const register_store = () => {
         } catch (error) {
             console.error('Error:', error);
         }
-        router.push('/');
+        router.push('/users/'+username);
     };
 
     return (

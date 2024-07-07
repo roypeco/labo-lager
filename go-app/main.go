@@ -37,6 +37,7 @@ func main() {
 	restricted := e.Group("/restricted")
 	restricted.Use(echojwt.WithConfig(config))
 	restricted.GET("/whoami", Auth.WhoAmI)
+	restricted.GET("/stores", Cruds.GetStores)
 	restricted.POST("/register/store", Cruds.CreateStore)
 	restricted.POST("/register/item", Cruds.RegisterItem)
 	restricted.POST("/register/replenishment", Cruds.ReplenishmentItem)

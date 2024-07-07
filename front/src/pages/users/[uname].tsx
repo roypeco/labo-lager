@@ -5,17 +5,24 @@ import Box from '@mui/material/Box'; // @mui/material がインストールさ�
 
 const aaa = () => {
 
+  const [username, setUsername] = useState<string | null>(null);
+  const [jwtToken, setJwtToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const usernameFromCookie = Cookies.get('username');
     const jwtTokenFromCookie = Cookies.get('jwt');
+    setUsername(usernameFromCookie || '');
+    setJwtToken(jwtTokenFromCookie || '');
     setLoading(false);
   }, []);
 
 return (
     <Box>
         <DrawerAppBar />
+        <Box>
+          <p>{ username }</p>
+        </Box>
     </Box>
 )
 
