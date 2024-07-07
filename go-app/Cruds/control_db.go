@@ -338,7 +338,7 @@ func GetStores(c echo.Context) error {
 	if err := c.Bind(&user); err != nil {
 		return err
 	}
-	// stores := []Store{}
+	stores := []Store{}
 	user_stores := []UserStore{}
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -354,7 +354,13 @@ func GetStores(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
 	}
 
-	return c.JSON(http.StatusOK, user_stores)
+	for _, user_store := range user_stores {
+		store := Store{}
+		db.Where("id = ?", user_store.StoreID).First(&store)
+		stores = append(stores, store)
+	}
+
+	return c.JSON(http.StatusOK, stores)
 }
 
 func GetStock(c echo.Context) error {
