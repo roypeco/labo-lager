@@ -7,6 +7,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
 import StoreIcon from '@mui/icons-material/Store';
 import { styled } from '@mui/material/styles';
 
@@ -61,12 +62,17 @@ const MyPage = () => {
   }
 
   const CustomListItem = styled(ListItem)(({ theme }) => ({
-    height: '100px', // ここで高さを調整
+    height: '80px', // ここで高さを調整
+    width: '400px',
   }));
 
   const CustomListItemButton = styled(ListItemButton)(({ theme }) => ({
     height: '100%', // ListItem の高さを100%に設定
+    border: '1px solid', // 枠線を追加
+    borderColor: theme.palette.divider, // 枠線の色をテーマのdivider色に設定
+    borderRadius: '4px', // 角を丸める（必要に応じて）
   }));
+  
 
   const CustomListItemText = styled(ListItemText)(({ theme }) => ({
     '& .MuiListItemText-primary': {
@@ -94,7 +100,14 @@ const MyPage = () => {
             alignItems: 'center',
         }}
       >
-        <Box>
+        <Box
+          sx={{
+            mt: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+          >
           <h1>店舗一覧</h1>
           <nav aria-label="all stores list">
             <List>
