@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useRouter } from 'next/router';
 import Link from 'next/link'
 import Cookies from 'js-cookie';
 import Avatar from '@mui/material/Avatar';
@@ -31,7 +32,8 @@ function Copyright(props: any) {
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
-export default function SignIn() {
+export default function SignUp() {
+  const router = useRouter();
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -45,8 +47,7 @@ export default function SignIn() {
       return
     } else{
       const ResData = await response.json();
-      Cookies.set('username', ResData.username)
-      console.log(ResData.username);
+      router.push('/');
     }
   };
 
@@ -93,16 +94,14 @@ export default function SignIn() {
               control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
             />
-            <Link href='/'>
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-              >
-                Sign Up
-              </Button>
-            </Link>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+            >
+              Sign Up
+            </Button>
             <Grid container>
               <Grid item xs>
                 <Link href="#">

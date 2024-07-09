@@ -335,9 +335,8 @@ func Login(c echo.Context) error {
 func GetStores(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	user := User{}
-	if err := c.Bind(&user); err != nil {
-		return err
-	}
+	username := c.QueryParam("username")
+	user.UserName = username
 	stores := []Store{}
 	user_stores := []UserStore{}
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,

@@ -28,11 +28,6 @@ const register_store = () => {
         const description = data.get('description') as string | null;
         const username = data.get('username') as string | null;
 
-        // console.log("Username from Cookie: ", usernameFromCookie);
-        // console.log("Store Name: ", storename);
-        // console.log("Description: ", description);
-        // console.log("Username: ", username);
-
         // FormData から JSON に変換
         const jsonData = {
             storename: storename,
@@ -40,7 +35,7 @@ const register_store = () => {
             username: username
         };
 
-        // ここでAPIにデータを送信する処理を行う
+        // APIにデータを送信する処理を行う
         try {
             const response = await fetch('http://localhost:8000/restricted/register/store', {
                 method: 'POST',

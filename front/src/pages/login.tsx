@@ -50,7 +50,7 @@ export default function SignIn() {
       const ResData = await response.json();
       await Cookies.set('jwt', ResData.token);
       await Cookies.set('username', ResData.username);
-      router.push('/');
+      router.push('/users/'+ResData.username);
     }
   };
 
