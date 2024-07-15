@@ -26,7 +26,6 @@ interface Props {
 }
 
 const drawerWidth = 240;
-const navItems = ['Home', 'Login', 'Sign up'];
 
 export default function DrawerAppBar(props: Props) {
   const { window } = props;
@@ -45,19 +44,14 @@ export default function DrawerAppBar(props: Props) {
       </Typography>
       <Divider />
       <List>
-          <ListItem key="Home" disablePadding>
-            <Link href="/">
-              <ListItemText primary="Home" />
-            </Link>
-          </ListItem>
           <ListItem key="Login" disablePadding>
             <Link href="/login">
-              <ListItemText primary="Login" />
+              <ListItemText primary="ログイン" />
             </Link>
           </ListItem>
           <ListItem key="Sign up" disablePadding>
             <Link href="/signup">
-              <ListItemText primary="Sign up" />
+              <ListItemText primary="アカウント登録" />
             </Link>
           </ListItem>
       </List>
@@ -95,19 +89,14 @@ export default function DrawerAppBar(props: Props) {
             </Link>
           </Typography>
           <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <Link href="/">
-              <Button key="Home" sx={{ color: '#fff' }}>
-                Home
-              </Button>
-            </Link>
             <Link href="/login">
               <Button key="login" sx={{ color: '#fff' }}>
-                Login
+                ログイン
               </Button>
             </Link>
             <Link href="/signup">
               <Button key="Sign up" sx={{ color: '#fff' }}>
-                Sign up
+                アカウント登録
               </Button>
             </Link>
           </Box>
