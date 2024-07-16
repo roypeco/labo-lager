@@ -362,6 +362,36 @@ func GetStores(c echo.Context) error {
 	return c.JSON(http.StatusOK, stores)
 }
 
+func GetOtherStores(c echo.Context) error {
+	token := c.Get("user").(*jwt.Token)
+	user := User{}
+	username := c.QueryParam("username")
+	user.UserName = username
+	stores := []Store{}
+	user_stores := []UserStore{}
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+	db.Where("user_name = ?", user.UserName).First(&user)
+	db.Not("user_id = ?", user.ID).Find(&user_stores)
+
+	if !(IsValid(token, int(user.ID))) {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
+	}
+
+	for _, user_store := range user_stores {
+		store := Store{}
+		db.Where("id = ?", user_store.StoreID).First(&store)
+		stores = append(stores, store)
+	}
+
+	return c.JSON(http.StatusOK, stores)
+}
+
 func GetStock(c echo.Context) error {
 	s := Store{}
 	items := []Item{}

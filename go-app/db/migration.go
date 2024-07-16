@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -11,11 +12,8 @@ import (
 
 type User struct {
 	ID       uint
-	UserName string `gorm:"unique; not null"`
-	// IsOwner     bool   `gorm:"default:0"`
-	// UserStoreID uint
-	// UserStore   UserStore
-	Stores []*Store `gorm:"many2many:user_stores;"`
+	UserName string   `gorm:"unique; not null"`
+	Stores   []*Store `gorm:"many2many:user_stores;"`
 }
 
 type Auth struct {
@@ -42,9 +40,7 @@ type Store struct {
 	ID          uint
 	StoreName   string `gorm:"unique; not null"`
 	Description string
-	// UserStoreID uint
-	// UserStore   UserStore
-	Users []*User `gorm:"many2many:user_stores"`
+	Users       []*User `gorm:"many2many:user_stores"`
 }
 
 type History struct {
@@ -77,9 +73,20 @@ func main() {
 		panic("failed to connect database")
 	}
 
+	// データベースを作成する
+	err = db.Exec("CREATE DATABASE IF NOT EXISTS dbname").Error
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Database created successfully")
+
 	// マイグレーションを実行してテーブルを作成
 	db.Migrator().DropTable(&User{}, &Item{}, &Store{}, &History{}, &Auth{}, &UserStore{})
 	db.AutoMigrate(&User{}, &Item{}, &Store{}, &History{}, &Auth{}, &UserStore{})
 
 	fmt.Println("テーブルが作成されました。")
+
+	// DB接続を閉じる
+    sqlDB, _ := db.DB()
+    defer sqlDB.Close()
 }
