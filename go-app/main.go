@@ -31,12 +31,12 @@ func main() {
 
 	e.GET("/health_check", Cruds.HealthCheck)
 	e.POST("/register/user", Cruds.RegisterUser)
-	e.PUT("/register/user", Cruds.AddUserToStore)
 	e.POST("/login", Cruds.Login)
 	
 	restricted := e.Group("/restricted")
 	restricted.Use(echojwt.WithConfig(config))
 	restricted.GET("/whoami", Auth.WhoAmI)
+	restricted.PUT("/register/user", Cruds.AddUserToStore)
 	restricted.GET("/stores", Cruds.GetStores)
 	restricted.GET("/other_stores", Cruds.GetOtherStores)
 	restricted.POST("/register/store", Cruds.CreateStore)

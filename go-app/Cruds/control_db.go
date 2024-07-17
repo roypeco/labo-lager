@@ -180,13 +180,14 @@ func AddUserToStore(c echo.Context) error {
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	us.UserID = u.ID
 	us.StoreID = s.ID
-	db.Save(&u)
+	// db.Save(&u)
 	err = db.Where("user_id = ? AND store_id = ?", u.ID, s.ID).First(&us).Error
 	if err != nil {
 		err = db.Create(&us).Error
 		if err != nil {
 			panic(err.Error())
 		}
+		return c.String(http.StatusOK, "success")
 	}
 	us.Roll = r.Roll
 	err = db.Save(&us).Error
@@ -377,17 +378,18 @@ func GetOtherStores(c echo.Context) error {
 		panic(err.Error())
 	}
 	db.Where("user_name = ?", user.UserName).First(&user)
-	db.Not("user_id = ?", user.ID).Find(&user_stores)
-
 	if !(IsValid(token, int(user.ID))) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
 	}
+	db.Not("user_id = ?", user.ID).Find(&user_stores)
+	log.Printf("%+v",user_stores)
 
 	for _, user_store := range user_stores {
 		store := Store{}
 		db.Where("id = ?", user_store.StoreID).First(&store)
 		stores = append(stores, store)
 	}
+
 
 	return c.JSON(http.StatusOK, stores)
 }

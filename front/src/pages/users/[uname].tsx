@@ -10,17 +10,25 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
 import StoreIcon from '@mui/icons-material/Store';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Button from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
-import { useRouter } from 'next/router'; // useRouter をインポートする
+import { useRouter } from 'next/router';
 
 const MyPage = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [jwtToken, setJwtToken] = useState<string | null>(null);
   const [stores, setStores] = useState<{ID: number, StoreName: string, Description: string}[]>([]);
+  const [otherStores, setOtherStores] = useState<{ID: number, StoreName: string, Description: string}[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newstoreName, setNewStoreName] = useState('');
+  const [clickCount, setClickCount] = useState(0);
   const rowPath = usePathname();
   const userPath = rowPath ? rowPath.slice(7) : '';
-  const router = useRouter(); // useRouter を初期化する
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,22 +64,73 @@ const MyPage = () => {
         console.error('Error:', error);
       }
 
+      try {
+        const response = await fetch('http://localhost:8000/restricted/other_stores?username=' + userPath, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': jwtTokenFromCookie || ''
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const result = await response.json();
+
+        if (Array.isArray(result)) {
+          setOtherStores(result);
+        } else {
+          console.error('Invalid data structure:', result);
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+      }
+
       setLoading(false);
     };
 
     fetchData();
-  }, [userPath]);
+  }, [userPath, clickCount]);
 
   const handleClick = (storeName: string) => {
-    // storeNameに基づいてリンク先のURLを生成する
     const url = `/stores/${encodeURIComponent(storeName)}`;
-    // リンク先に遷移する処理
-    router.push(url); // useRouterを使用して実際に遷移する
+    router.push(url);
   };
 
   if (loading) {
     return <Box>Loading...</Box>;
   }
+
+  const handleChange = (event: SelectChangeEvent) => {
+    setNewStoreName(event.target.value as string);
+  };
+
+  const handleSubmit = async (storeName: string, jwtToken: string | null, username: string | null) => {
+    try {
+      const response = await fetch('http://localhost:8000/restricted/register/user', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': jwtToken || ''
+        },
+        body: JSON.stringify({
+          "username": username,
+          "storename": storeName,
+          "roll": 'C'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+    setClickCount(prevCount => prevCount + 1);
+  };
 
   const CustomListItem = styled(ListItem)(({ theme }) => ({
     height: '80px',
@@ -121,7 +180,7 @@ const MyPage = () => {
           }}
         >
           <nav aria-label="all stores list">
-            <h1>店舗一覧</h1>
+            <h1>登録店舗一覧</h1>
             <List>
               {stores.map((store) => (
                 <CustomListItem key={store.ID} disablePadding>
@@ -137,12 +196,37 @@ const MyPage = () => {
           </nav>
           <Divider />
           <nav aria-label="register new store">
-            <h1>新規店舗に登録</h1>
+            <h1>他の店舗を登録</h1>
+            <h2>既存の店舗に登録</h2>
+            <FormControl fullWidth>
+              <InputLabel id="store-select-label">店舗選択</InputLabel>
+              <Select
+                labelId="store-select-label"
+                id="store-select"
+                value={newstoreName}
+                label="store-name"
+                onChange={handleChange}
+              >
+                {otherStores.map((store) => (
+                  <MenuItem value={store.StoreName} key={store.ID}>{store.StoreName}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button variant="contained" onClick={() => handleSubmit(newstoreName, jwtToken, username)} sx={{ mt: 1 }}>
+              登録
+            </Button>
+            <List>
+              <ListItem disablePadding>
+                <ListItemButton component="a" href="/stores/register">
+                  <ListItemText primary="新規店舗を開設" />
+                </ListItemButton>
+              </ListItem>
+            </List>
           </nav>
         </Box>
       </Box>
     </Box>
   );
-}
+};
 
 export default MyPage;

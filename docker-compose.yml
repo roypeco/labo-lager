@@ -3,6 +3,7 @@ volumes:
   node_modules:
 services:
   front:
+    container_name: front
     build: ./front
     ports:
       - '3000:3000'
@@ -13,6 +14,7 @@ services:
     stdin_open: true
     
   go:
+    container_name: api
     build: ./go-app
     ports:
       - '8000:8000'
