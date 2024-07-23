@@ -1,54 +1,16 @@
-## For Developer
+# Labolager
+大学の研究室のような小さなコミュニティで小売をするための在庫管理Webアプリ
 
-### Frontend
+## 利用例
+- スーパーマーケットで買ってきたカップ麺やお菓子を研究室で売っているけど、何がどれだけ売れて何を買い足せばいいか研究室に行かないとわからない
+- 今日の昼食は研究室にあるもので済ませたいけど、ラインナップが悪ければ道中で買ってから大学に行きたい
 
-- 好きに実装してください
-
-### Backend
-
-- ルーターはmain.goに含まれていて，呼び出された際にそれぞれのパッケージから呼び出しています
-
-### DB
-
-- マイグレーションはdocker containerを起動し，goのコンテナに入ったのちに以下のコマンドを実行してください
-```bash
-cd db && ./migration
-```
-- migration.goを変更した場合以下のコマンドを実行してください
-```bash
-cd db && go build migration.go
-./migration
-```
-
-# 仕様書
-
-## やりたいこと
-
-研究室のような小コミュニティで小売店のようなものをするにあたって在庫・値段管理や支払いができるアプリ
-
-## 今やっていること・これからやること
-
-### バックエンド
-
-- [x] ユーザ登録　POST:/register/user {username:str, pass:str}
-- [x] 店登録　POST:/register/store {username:str, storename:str, description:str}
-- [x] 商品登録　POST:/register/item {username:str, storename:str, itemname:str, category:str, price:int, jancode:str, num:int}
-- [x] オーナー，顧客登録　PUT:/register/user {username:str, sorename:str, roll:str}
-- [x] 商品購入　POST:/buy {username:str, storename:str, itemid:int, num:int}
-- [x] 商品補充　POST:/register/replenishment {username:str, storename:str, itemid:int, num:int}
-- [x] ログイン POST:/login {username:str, pass:str}
-- [x] 店舗の商品一覧取得 GET:/stock/:storename
-- [x] 店舗の商品一覧取得(在庫0も含む) GET:/stock_all/:storename
-
-### フロントエンド
-
-- 放置中
-
-### DB
-
-- user
-
-| id(int)        | username(str) | pass_hash(str) | is_owner(bool) | 
-| -------------- | ------------- | -------------- | -------------- | 
-| prim           | not null      | not null       | default 0      | 
-| auto increment | unique        |                |                | 
+## 技術スタック
+- フロントエンド
+  - TypeScript, Next.js
+- バックエンド
+  - Go, Echo
+- DB
+  - MySQL
+- ストレージ
+  - S3(予定)
