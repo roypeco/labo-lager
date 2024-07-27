@@ -43,6 +43,16 @@ func RegisterUser(c echo.Context) error {
 		return err
 	}
 
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	// usernameが既に存在するかの確認
 	db.Find(&UsernameLSlice)
 	for _, user := range UsernameLSlice {
@@ -89,6 +99,17 @@ func CreateStore(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("user_name = ?", u.UserName).First(&u)
 	if !(IsValid(token, int(u.ID))) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
@@ -141,6 +162,17 @@ func RegisterItem(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("user_name = ?", u.UserName).First(&u)
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
@@ -176,6 +208,17 @@ func AddUserToStore(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("user_name = ?", u.UserName).First(&u)
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	us.UserID = u.ID
@@ -220,6 +263,17 @@ func BuyItem(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("user_name = ?", u.UserName).First(&u)
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	db.Where("id = ?", i.ID).First(&i)
@@ -266,6 +320,17 @@ func ReplenishmentItem(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("user_name = ?", u.UserName).First(&u)
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	db.Where("id = ?", i.ID).First(&i)
@@ -296,6 +361,17 @@ func Login(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("user_name = ?", u.UserName).First(&u)
 	a.UserID = u.ID
 	db.Where("user_id = ?", u.ID).First(&a)
@@ -347,6 +423,17 @@ func GetStores(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("user_name = ?", user.UserName).First(&user)
 	db.Where("user_id = ?", user.ID).Find(&user_stores)
 
@@ -377,6 +464,17 @@ func GetOtherStores(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("user_name = ?", user.UserName).First(&user)
 	if !(IsValid(token, int(user.ID))) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
@@ -406,6 +504,17 @@ func GetStock(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	db.Where("store_id = ? AND num > ?", s.ID, 0).Find(&items)
 	return c.JSON(http.StatusOK, items)
@@ -423,6 +532,17 @@ func GetAllStock(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
 	db.Where("store_name = ?", s.StoreName).First(&s)
 	db.Where("store_id = ?", s.ID).Find(&items)
 	return c.JSON(http.StatusOK, items)
