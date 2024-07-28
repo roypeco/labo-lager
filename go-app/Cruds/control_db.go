@@ -8,6 +8,11 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"mime/multipart"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -480,14 +485,13 @@ func GetOtherStores(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
 	}
 	db.Not("user_id = ?", user.ID).Find(&user_stores)
-	log.Printf("%+v",user_stores)
+	log.Printf("%+v", user_stores)
 
 	for _, user_store := range user_stores {
 		store := Store{}
 		db.Where("id = ?", user_store.StoreID).First(&store)
 		stores = append(stores, store)
 	}
-
 
 	return c.JSON(http.StatusOK, stores)
 }
@@ -553,6 +557,28 @@ func HealthCheck(c echo.Context) error {
 	return c.String(http.StatusOK, "Server is running")
 }
 
+func UploadImg(c echo.Context) error {
+	file, err := c.FormFile("file")
+	if err != nil {
+		return err
+	}
+
+	// ファイルを開く
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	// ファイルをS3にアップロード
+	err = uploadFileToS3(src, file.Filename)
+	if err != nil {
+		return err
+	}
+
+	return c.String(http.StatusOK, fmt.Sprintf("ファイル %s がS3に正常にアップロードされました", file.Filename))
+}
+
 func IsValid(token *jwt.Token, uid int) bool {
 	if token == nil {
 		return false
@@ -564,4 +590,28 @@ func IsValid(token *jwt.Token, uid int) bool {
 	} else {
 		return false
 	}
+}
+
+func uploadFileToS3(file multipart.File, filename string) error {
+	// デフォルトのセッションを初期化
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(os.Getenv("AWS_REGION")), // S3バケットのリージョンに変更してください
+	})
+	if err != nil {
+		return err
+	}
+
+	// S3サービスクライアントを作成
+	svc := s3.New(sess)
+
+	// アップロードパラメータを設定
+	params := &s3.PutObjectInput{
+		Bucket: aws.String("labolager-bucket"), // S3バケット名に変更してください
+		Key:    aws.String(fmt.Sprintf("images/test/%s", filename)),
+		Body:   file,
+	}
+
+	// ファイルをS3にアップロード
+	_, err = svc.PutObject(params)
+	return err
 }

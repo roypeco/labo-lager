@@ -32,6 +32,7 @@ func main() {
 	e.GET("/health_check", Cruds.HealthCheck)
 	e.POST("/register/user", Cruds.RegisterUser)
 	e.POST("/login", Cruds.Login)
+	e.POST("/upload", Cruds.UploadImg)
 	
 	restricted := e.Group("/restricted")
 	restricted.Use(echojwt.WithConfig(config))
