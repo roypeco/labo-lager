@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"time"
-	"mime/multipart"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -153,7 +153,6 @@ func RegisterItem(c echo.Context) error {
 		return err
 	}
 	i.ItemName = r.ItemName
-	i.JanCode = r.JanCode
 	i.Num = r.Num
 	i.Price = r.Price
 	i.Category = r.Category
@@ -189,6 +188,31 @@ func RegisterItem(c echo.Context) error {
 	err = db.Create(&i).Error
 	if err != nil {
 		panic(err.Error())
+	}
+
+	// 画像ファイルをs3にアップロード
+	err = db.Last(&i).Error
+	if err != nil {
+		panic(err.Error())
+	}
+
+	// ファイルを開く
+	file, err := c.FormFile("file")
+	if err != nil {
+		log.Println("ファイルが読み込めませんでした")
+		return err
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	// ファイルをS3にアップロード
+	err = uploadFileToS3(src, fmt.Sprintf("images/%s/%d.jpg", r.StoreName, i.ID))
+	if err != nil {
+		return err
 	}
 
 	return c.String(http.StatusOK, "success")
@@ -557,28 +581,6 @@ func HealthCheck(c echo.Context) error {
 	return c.String(http.StatusOK, "Server is running")
 }
 
-func UploadImg(c echo.Context) error {
-	file, err := c.FormFile("file")
-	if err != nil {
-		return err
-	}
-
-	// ファイルを開く
-	src, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	// ファイルをS3にアップロード
-	err = uploadFileToS3(src, file.Filename)
-	if err != nil {
-		return err
-	}
-
-	return c.String(http.StatusOK, fmt.Sprintf("ファイル %s がS3に正常にアップロードされました", file.Filename))
-}
-
 func IsValid(token *jwt.Token, uid int) bool {
 	if token == nil {
 		return false
@@ -592,7 +594,7 @@ func IsValid(token *jwt.Token, uid int) bool {
 	}
 }
 
-func uploadFileToS3(file multipart.File, filename string) error {
+func uploadFileToS3(file multipart.File, filePath string) error {
 	// デフォルトのセッションを初期化
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("AWS_REGION")), // S3バケットのリージョンに変更してください
@@ -607,7 +609,7 @@ func uploadFileToS3(file multipart.File, filename string) error {
 	// アップロードパラメータを設定
 	params := &s3.PutObjectInput{
 		Bucket: aws.String("labolager-bucket"), // S3バケット名に変更してください
-		Key:    aws.String(fmt.Sprintf("images/test/%s", filename)),
+		Key:    aws.String(filePath),
 		Body:   file,
 	}
 

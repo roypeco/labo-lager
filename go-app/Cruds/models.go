@@ -17,7 +17,6 @@ type Item struct {
 	ItemName string `gorm:"column:item_name"`
 	Price    int    `gorm:"column:price"`
 	Category string `gorm:"column:category"`
-	JanCode  string `gorm:"column:jan_code"`
 	Num      int    `gorm:"column:num"`
 	UserId   uint   `gorm:"column:user_id"`
 	StoreID  uint   `gorm:"column:store_id"`
@@ -59,13 +58,12 @@ type CreateStoreRequest struct {
 }
 
 type RegisterItemRequest struct {
-	UserName  string `json:"username"`
-	StoreName string `json:"storename"`
-	ItemName  string `json:"itemname"`
-	Category  string `json:"category"`
-	Price     int    `json:"price"`
-	JanCode   string `json:"jancode"`
-	Num       int    `json:"num"`
+	UserName  string `json:"username" form:"username"`
+	StoreName string `json:"storename" form:"storename"`
+	ItemName  string `json:"itemname" form:"itemname"`
+	Category  string `json:"category" form:"category"`
+	Price     int    `json:"price" form:"price"`
+	Num       int    `json:"num" form:"num"`
 }
 
 type AddUserToStoreRequest struct {

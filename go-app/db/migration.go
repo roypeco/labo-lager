@@ -27,7 +27,6 @@ type Item struct {
 	ID       uint
 	ItemName string
 	Price    int
-	JanCode  string
 	Num      int
 	Category string `gorm:"default:other"`
 	UserId   uint   `gorm:"not null"`
