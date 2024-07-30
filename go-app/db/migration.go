@@ -28,6 +28,7 @@ type Item struct {
 	ItemName string
 	Price    int
 	Num      int
+	ImgPass  string
 	Category string `gorm:"default:other"`
 	UserId   uint   `gorm:"not null"`
 	User     User
@@ -86,6 +87,6 @@ func main() {
 	fmt.Println("テーブルが作成されました。")
 
 	// DB接続を閉じる
-    sqlDB, _ := db.DB()
-    defer sqlDB.Close()
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 }

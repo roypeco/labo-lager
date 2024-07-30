@@ -152,10 +152,15 @@ func RegisterItem(c echo.Context) error {
 	if err := c.Bind(&r); err != nil {
 		return err
 	}
+	now := time.Now()
+
+    // フォーマットされた時刻を生成
+    formattedTime := now.Format("060102150405")
 	i.ItemName = r.ItemName
 	i.Num = r.Num
 	i.Price = r.Price
 	i.Category = r.Category
+	i.ImgPass = fmt.Sprintf("images/%s/%s.jpg", r.StoreName, formattedTime)
 	s.StoreName = r.StoreName
 	u.UserName = r.UserName
 
@@ -185,24 +190,25 @@ func RegisterItem(c echo.Context) error {
 	}
 	i.UserId = uint(u.ID)
 	i.StoreID = uint(s.ID)
+
+	// ファイルの有無を確認
+	file, err := c.FormFile("file")
+	if err != nil {
+		log.Println("ファイルが読み込めませんでした")
+		i.ImgPass = ""
+		err = db.Create(&i).Error
+		if err != nil {
+			panic(err.Error())
+		}
+		return c.JSON(http.StatusOK, map[string]string{"message":"no img registered"})
+	}
+
 	err = db.Create(&i).Error
 	if err != nil {
 		panic(err.Error())
 	}
 
 	// 画像ファイルをs3にアップロード
-	err = db.Last(&i).Error
-	if err != nil {
-		panic(err.Error())
-	}
-
-	// ファイルを開く
-	file, err := c.FormFile("file")
-	if err != nil {
-		log.Println("ファイルが読み込めませんでした")
-		return err
-	}
-
 	src, err := file.Open()
 	if err != nil {
 		return err
@@ -210,7 +216,7 @@ func RegisterItem(c echo.Context) error {
 	defer src.Close()
 
 	// ファイルをS3にアップロード
-	err = uploadFileToS3(src, fmt.Sprintf("images/%s/%d.jpg", r.StoreName, i.ID))
+	err = uploadFileToS3(src, fmt.Sprintf(i.ImgPass))
 	if err != nil {
 		return err
 	}

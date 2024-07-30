@@ -18,6 +18,7 @@ type Item struct {
 	Price    int    `gorm:"column:price"`
 	Category string `gorm:"column:category"`
 	Num      int    `gorm:"column:num"`
+	ImgPass  string `gorm:"column:img_pass"`
 	UserId   uint   `gorm:"column:user_id"`
 	StoreID  uint   `gorm:"column:store_id"`
 }

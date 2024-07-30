@@ -18,6 +18,7 @@ func main() {
 		Format: `${time_rfc3339_nano} ${host} ${method} ${uri} ${status} ${header:my-header}` + "\n",
 	}))
 
+	// JWTの設定
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		panic("JWT Secret not found")
@@ -29,10 +30,13 @@ func main() {
 		TokenLookup: "header:Authorization",
 	}
 
+	// エンドポイントの設定
+	// JWT認証なし
 	e.GET("/health_check", Cruds.HealthCheck)
 	e.POST("/register/user", Cruds.RegisterUser)
 	e.POST("/login", Cruds.Login)
 	
+	// JWT認証あり
 	restricted := e.Group("/restricted")
 	restricted.Use(echojwt.WithConfig(config))
 	restricted.GET("/whoami", Auth.WhoAmI)
@@ -46,5 +50,6 @@ func main() {
 	restricted.GET("/stock/:storename", Cruds.GetStock)
 	restricted.GET("/stock_all/:storename", Cruds.GetAllStock)
 
+	// サーバー開始
 	e.Logger.Fatal(e.Start(":8000"))
 }
