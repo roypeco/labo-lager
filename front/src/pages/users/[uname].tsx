@@ -164,10 +164,10 @@ const MyPage = () => {
         noValidate
         sx={{
           mt: 1,
-          width: 500,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          textAlign: 'center',
         }}
       >
         <Box
@@ -176,7 +176,6 @@ const MyPage = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            textAlign: 'center',
           }}
         >
           <nav aria-label="all stores list">
@@ -196,8 +195,7 @@ const MyPage = () => {
           </nav>
           <Divider />
           <nav aria-label="register new store">
-            <h1>他の店舗を登録</h1>
-            <h2>既存の店舗に登録</h2>
+            <h2>既存の店舗に自分を登録</h2>
             <FormControl fullWidth>
               <InputLabel id="store-select-label">店舗選択</InputLabel>
               <Select
@@ -212,16 +210,12 @@ const MyPage = () => {
                 ))}
               </Select>
             </FormControl>
-            <Button variant="contained" onClick={() => handleSubmit(newstoreName, jwtToken, username)} sx={{ mt: 1 }}>
+            <Button variant="outlined" onClick={() => handleSubmit(newstoreName, jwtToken, username)} sx={{ mt: 1 , mb: 1}}>
               登録
             </Button>
-            <List>
-              <ListItem disablePadding>
-                <ListItemButton component="a" href="/stores/register">
-                  <ListItemText primary="新規店舗を開設" />
-                </ListItemButton>
-              </ListItem>
-            </List>
+            <br />
+            <h2>新規店舗を開設する</h2>
+            <Button variant='outlined' href='/stores/register' size='large'>新規店舗を開設</Button>
           </nav>
         </Box>
       </Box>

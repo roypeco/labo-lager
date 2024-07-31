@@ -3,9 +3,8 @@ import { useEffect, useState } from "react";
 import { usePathname } from 'next/navigation';
 import Cookies from 'js-cookie';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
-import ListItem from '@mui/material/ListItem';
+import Button from '@mui/material/Button';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Image from 'next/image';
@@ -76,27 +75,32 @@ const register_store = () => {
             >
                 <h1>商品一覧</h1>
                 <nav aria-label="store item list">
-                <Grid container spacing={0}>
+                <Grid container spacing={0.5} rowSpacing={1} sx={{mb: 5}}>
                     {items.map((item) => (
-                        <Grid item key={item.ID} sm={4} xs={6}>
+                        <Grid item key={item.ID} sm={4} md={4} lg={4} xl={4} xs={6} 
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                            }}
+                        >
                             <ListItemButton
                                 sx={{
                                     width: '100%',
                                     height: '100%',
+                                    maxWidth: '300px',
+                                    maxHeight: '300px',
                                     display: 'flex',
-                                    flexDirection: 'column', // ここで縦方向に並べる
+                                    flexDirection: 'column',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     textAlign: 'center',
-                                    aspectRatio: '1',
-                                    maxWidth: '300px',
-                                    maxHeight: '300px',
+                                    // aspectRatio: '1',
                                 }}
                                 >
                                 <ListItemText
                                     primary={item.ItemName}
                                     sx={{
-                                    overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                     whiteSpace: 'nowrap',
                                     width: '100%',
@@ -106,8 +110,6 @@ const register_store = () => {
                                 <Image
                                     src={itemImage}
                                     alt="Description of image"
-                                    width={300}
-                                    height={300}
                                     layout="responsive"
                                 />
                                 <ListItemText primary={`${item.Price}円`} />
@@ -115,7 +117,9 @@ const register_store = () => {
                         </Grid>
                     ))}
                 </Grid>
-
+                </nav>
+                <nav aria-label="register new item">
+                    <Button href={`/items/${storeName}`}>新商品を追加する</Button>
                 </nav>
             </Box>
         </Box>
