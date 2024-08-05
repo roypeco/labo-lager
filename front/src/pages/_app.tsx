@@ -1,7 +1,8 @@
 import type { AppProps } from "next/app";
-import { RecoilRoot } from 'recoil'
-import dayjs from 'dayjs'
-import 'dayjs/locale/ja'
+import { RecoilRoot } from 'recoil';
+import '../styles/globals.css';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ja';
 
 
 export default function App({ Component, pageProps }: AppProps) {
