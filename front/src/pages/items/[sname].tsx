@@ -11,6 +11,8 @@ const RegisterStore = () => {
     const [usernameFromCookie, setUsernameFromCookie] = useState<string | undefined>(undefined);
     const [jwtTokenFromCookie, setJwtTokenFromCookie] = useState<string | undefined>(undefined);
     const [storeName, setStoreName] = useState<string>('');
+    const [category, setCategory] = useState<string>('');
+    const [imageFile, setImageFile] = useState<File | null>(null); // 追加
     const rowPath = usePathname();
 
     useEffect(() => {
@@ -18,7 +20,7 @@ const RegisterStore = () => {
         setJwtTokenFromCookie(Cookies.get('jwt'));
 
         if (rowPath) {
-            setStoreName(rowPath.slice(6));
+            setStoreName(rowPath.slice(7));
         }
     }, [rowPath]);
 
@@ -26,32 +28,28 @@ const RegisterStore = () => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
 
+        
         if (usernameFromCookie) {
             data.append('username', usernameFromCookie);
         }
+        
+        if (storeName) {
+            data.append('storename', storeName);
+        }
 
-        const itemname = data.get('itemname') as string | null;
-        const category = data.get('category') as string | null;
-        const price = data.get('price') as number | null;
-        const num = data.get('num') as number | null;
-
-        const jsonData = {
-            username: usernameFromCookie,
-            storename: storeName,
-            itemname: itemname,
-            category: category,
-            price: price,
-            num: num,
-        };
+        if (imageFile) {
+            data.append('file', imageFile); // 画像ファイルを追加
+        }
+        
+        console.log(data)
 
         try {
             const response = await fetch('http://localhost:8000/restricted/register/item', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': jwtTokenFromCookie || ''
                 },
-                body: JSON.stringify(jsonData)
+                body: data
             });
 
             if (!response.ok) {
@@ -108,6 +106,8 @@ const RegisterStore = () => {
                                 labelId="category-label"
                                 id="category"
                                 name="category"
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
                                 label="カテゴリー"
                             >
                                 <MenuItem value={"カップ麺"}>カップ麺</MenuItem>
@@ -130,10 +130,19 @@ const RegisterStore = () => {
                             name="num"
                             margin="normal"
                         />
+                        <input
+                            accept="image/*"
+                            id="image"
+                            name="image"
+                            type="file"
+                            onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)}
+                            style={{ marginTop: '16px' }}
+                        />
                         <Button
                             variant="outlined"
                             size="large"
                             type="submit"
+                            sx={{ marginTop: '16px' }}
                         >
                             登録
                         </Button>

@@ -16,6 +16,8 @@
     "@mui/material": "^5.15.17",
     "@types/node": "^20.12.7",
     "@types/react": "^18.2.79",
+    "aws-sdk": "^2.1667.0",
+    "axios": "^1.7.3",
     "dayjs": "^1.11.11",
     "js-cookie": "^3.0.5",
     "next": "^14.2.2",
@@ -25,6 +27,7 @@
     "typescript": "^5.4.5"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "@types/js-cookie": "^3"
   }
 }
