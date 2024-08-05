@@ -1,5 +1,8 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Image from "next/image";
 import logoImage from "../../public/img/Labolager.png";
 import AppBar from '@mui/material/AppBar';
@@ -10,7 +13,6 @@ import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
@@ -18,10 +20,6 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 
 interface Props {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * You won't need it on your project.
-   */
   window?: () => Window;
 }
 
@@ -29,21 +27,44 @@ const drawerWidth = 240;
 
 export default function DrawerAppBar(props: Props) {
   const { window } = props;
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const usernameFromCookie = Cookies.get('username');
+    setUsername(usernameFromCookie || '');
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen((prevState) => !prevState);
   };
 
+  const handleLogout = () => {
+    Cookies.remove('username');
+    Cookies.remove('jwt');
+    router.push('/');
+  };
+
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-          <Link href="/">
-            <Image src={logoImage} alt='ロゴ画像' width='200' height='35' fetchPriority='high' loading='lazy' />
-          </Link>
+        <Link href="/">
+          <Image src={logoImage} alt='ロゴ画像' width='200' height='35' fetchPriority='high' loading='lazy' />
+        </Link>
       </Typography>
       <Divider />
-      <List>
+      {username ? (
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ my: 2 }}>
+            ようこそ {username} さん
+          </Typography>
+          <Button onClick={handleLogout} sx={{ color: '#000' }}>
+            ログアウト
+          </Button>
+        </Box>
+      ) : (
+        <List>
           <ListItem key="Login" disablePadding>
             <Link href="/login">
               <ListItemText primary="ログイン" />
@@ -54,19 +75,15 @@ export default function DrawerAppBar(props: Props) {
               <ListItemText primary="アカウント登録" />
             </Link>
           </ListItem>
-      </List>
+        </List>
+      )}
     </Box>
   );
 
   const container = window !== undefined ? () => window().document.body : undefined;
 
   return (
-    <Box
-      sx={{ 
-        display: 'flex',
-        marginBottom: 15,
-      }}
-    >
+    <Box sx={{ display: 'flex', marginBottom: 15 }}>
       <CssBaseline />
       <AppBar component="nav">
         <Toolbar>
@@ -89,16 +106,29 @@ export default function DrawerAppBar(props: Props) {
             </Link>
           </Typography>
           <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <Link href="/login">
-              <Button key="login" sx={{ color: '#fff' }}>
-                ログイン
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button key="Sign up" sx={{ color: '#fff' }}>
-                アカウント登録
-              </Button>
-            </Link>
+            {username ? (
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography>
+                  ようこそ {username} さん
+                </Typography>
+                <Button onClick={handleLogout} sx={{ color: '#fff' }}>
+                  (ログアウト)
+                </Button>
+              </Box>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button key="login" sx={{ color: '#fff' }}>
+                    ログイン
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button key="Sign up" sx={{ color: '#fff' }}>
+                    アカウント登録
+                  </Button>
+                </Link>
+              </>
+            )}
           </Box>
         </Toolbar>
       </AppBar>
