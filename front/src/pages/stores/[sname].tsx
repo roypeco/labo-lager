@@ -2,20 +2,23 @@ import DrawerAppBar from "@/components/DrawerAppBar";
 import { useEffect, useState } from "react";
 import { usePathname } from 'next/navigation';
 import Cookies from 'js-cookie';
+import axios from 'axios';
+import { AxiosError } from "axios";
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Image from 'next/image';
-import itemImage from '../../../public/img/square.jpg';
+import itemImage from '../../../public/img/item.png';
 
 const register_store = () => {
     const [username, setUsername] = useState<string | null>(null);
     const [jwtToken, setJwtToken] = useState<string | null>(null);
     const rowPath = usePathname();
     const storeName = rowPath ? rowPath.slice(8) : '';
-    const [items, setItems] = useState<{ID: number, ItemName: string, Price: number, Category: string, JanCode: string, Num: number}[]>([]);
+    const [items, setItems] = useState<{ID: number, ItemName: string, Price: number, Category: string, ImgPass: string, Num: number}[]>([]);
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
 
     useEffect(() => {
         if (!storeName) return;
@@ -43,6 +46,26 @@ const register_store = () => {
 
                 if (Array.isArray(result)) {
                     setItems(result);
+
+                    // 画像のプリサインドURLを取得
+                    const imagePromises = result.map(async (item) => {
+                        if (item.ImgPass) {
+                            const imageUrl = await fetchImageUrl(item.ImgPass);
+                            return { id: item.ID, url: imageUrl };
+                        }
+                        return { id: item.ID, url: '' };
+                    });
+
+                    const urls = await Promise.all(imagePromises);
+                    const urlsMap = urls.reduce((acc, { id, url }) => {
+                        acc[id] = url;
+                        return acc;
+                    }, {} as { [key: number]: string });
+
+                    console.log(urlsMap);
+                    
+                    
+                    setImageUrls(urlsMap);
                 } else {
                     console.error('Invalid data structure:', result);
                 }
@@ -54,7 +77,28 @@ const register_store = () => {
 
         fetchData();
     }, [storeName]);
+
+    const fetchImageUrl = async (imgPass: string) => {
+        try {
+            const response = await axios.get('/api/getPresignedUrl', {
+                params: { key: imgPass },
+            });
+            return response.data.url;
+        } catch (error) {
+            // errorがAxiosError型であることを確認してからアクセスする
+            if (error instanceof AxiosError) {
+                console.error('Error data:', error.response?.data);
+                console.error('Error status:', error.response?.status);
+                console.error('Error headers:', error.response?.headers);
+            } else {
+                // それ以外のエラー型の場合
+                console.error('An unexpected error occurred:', error);
+            }
+            return '';
+        }
+    };
     
+
     return (
         <Box
         sx={{
@@ -76,7 +120,7 @@ const register_store = () => {
                 <h1>商品一覧</h1>
                 <nav aria-label="store item list">
                 <Grid container spacing={0.5} rowSpacing={1} sx={{mb: 5}}>
-                    {items.map((item) => (
+                    {items.map((item,index) => (
                         <Grid item key={item.ID} sm={4} md={4} lg={4} xl={4} xs={6} 
                             sx={{
                                 display: 'flex',
@@ -95,7 +139,7 @@ const register_store = () => {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     textAlign: 'center',
-                                    // aspectRatio: '1',
+                                    mb: 3,
                                 }}
                                 >
                                 <ListItemText
@@ -104,15 +148,34 @@ const register_store = () => {
                                     textOverflow: 'ellipsis',
                                     whiteSpace: 'nowrap',
                                     width: '100%',
+                                    height: '20%',
                                     textAlign: 'center',
                                     }}
                                 />
-                                <Image
-                                    src={itemImage}
-                                    alt="Description of image"
-                                    layout="responsive"
+                                {imageUrls[item.ID] ? (
+                                    <Image
+                                        src={imageUrls[item.ID]}
+                                        alt={item.ItemName}
+                                        layout="responsive"
+                                        width={300}
+                                        height={300}
+                                    />
+                                ) : (
+                                    <Image
+                                        src={itemImage}
+                                        alt="Default image"
+                                        layout="responsive"
+                                        width={300}
+                                        height={300}
+                                    />
+                                )}
+                                <ListItemText
+                                    primary={`${item.Price}円`} 
+                                    sx={{
+                                        height: '20%',
+                                        textOverflow: 'ellipsis',
+                                    }}
                                 />
-                                <ListItemText primary={`${item.Price}円`} />
                                 </ListItemButton>
                         </Grid>
                     ))}
