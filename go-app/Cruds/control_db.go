@@ -7,6 +7,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -94,8 +95,14 @@ func CreateStore(c echo.Context) error {
 		return err
 	}
 	u.UserName = r.UserName
-	s.StoreName = r.StoreName
 	s.Description = r.Description
+
+	// StoreNameのデコード
+    decodedStoreName, err := url.QueryUnescape(r.StoreName)
+    if err != nil {
+        return err
+    }
+    s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -161,8 +168,14 @@ func RegisterItem(c echo.Context) error {
 	i.Price = r.Price
 	i.Category = r.Category
 	i.ImgPass = fmt.Sprintf("images/%s/%s.jpg", r.StoreName, formattedTime)
-	s.StoreName = r.StoreName
 	u.UserName = r.UserName
+	
+	// StoreNameのデコード
+    decodedStoreName, err := url.QueryUnescape(r.StoreName)
+    if err != nil {
+        return err
+    }
+    s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -233,8 +246,14 @@ func AddUserToStore(c echo.Context) error {
 		return err
 	}
 	u.UserName = r.UserName
-	s.StoreName = r.StoreName
 	us.Roll = r.Roll
+	
+	// StoreNameのデコード
+    decodedStoreName, err := url.QueryUnescape(r.StoreName)
+    if err != nil {
+        return err
+    }
+    s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -287,9 +306,15 @@ func BuyItem(c echo.Context) error {
 		return err
 	}
 	u.UserName = r.UserName
-	s.StoreName = r.StoreName
 	i.ID = uint(r.ItemID)
 	h.Num = r.Num
+
+	// StoreNameのデコード
+    decodedStoreName, err := url.QueryUnescape(r.StoreName)
+    if err != nil {
+        return err
+    }
+    s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -346,7 +371,13 @@ func ReplenishmentItem(c echo.Context) error {
 	}
 	u.UserName = r.Username
 	i.ID = r.ItemID
-	s.StoreName = r.StoreName
+
+	// StoreNameのデコード
+    decodedStoreName, err := url.QueryUnescape(r.StoreName)
+    if err != nil {
+        return err
+    }
+    s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -622,4 +653,38 @@ func uploadFileToS3(file multipart.File, filePath string) error {
 	// ファイルをS3にアップロード
 	_, err = svc.PutObject(params)
 	return err
+}
+
+func CheckOwner(c echo.Context) error {
+	username := c.QueryParam("username")
+	storename := c.QueryParam("storename")
+	user := User{}
+	store := Store{}
+	user_store := UserStore{}
+	user.UserName = username
+	store.StoreName = storename
+
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	db.Where("user_name = ?", user.UserName).First(&user)
+	db.Where("store_name = ?", store.StoreName).First(&store)
+	db.Where("user_id = ? AND store_id = ?", user.ID, store.ID).First(&user_store)
+
+	return c.JSON(http.StatusOK, map[string]string{"Roll": user_store.Roll})
 }

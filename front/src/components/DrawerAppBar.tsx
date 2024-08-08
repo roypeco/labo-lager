@@ -43,8 +43,14 @@ export default function DrawerAppBar(props: Props) {
   const handleLogout = () => {
     Cookies.remove('username');
     Cookies.remove('jwt');
-    router.push('/');
+    
+    if (router.pathname === '/') {
+      router.reload();
+    } else {
+      router.push('/');
+    }
   };
+  
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
