@@ -42,6 +42,7 @@ func main() {
 	restricted.GET("/whoami", Auth.WhoAmI)
 	restricted.GET("/permission", Cruds.CheckOwner)
 	restricted.PUT("/register/user", Cruds.AddUserToStore)
+	restricted.PUT("/delete/item", Cruds.DeleteItem)
 	restricted.GET("/stores", Cruds.GetStores)
 	restricted.GET("/other_stores", Cruds.GetOtherStores)
 	restricted.POST("/register/store", Cruds.CreateStore)

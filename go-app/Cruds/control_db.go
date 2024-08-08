@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -98,11 +99,11 @@ func CreateStore(c echo.Context) error {
 	s.Description = r.Description
 
 	// StoreNameのデコード
-    decodedStoreName, err := url.QueryUnescape(r.StoreName)
-    if err != nil {
-        return err
-    }
-    s.StoreName = decodedStoreName
+	decodedStoreName, err := url.QueryUnescape(r.StoreName)
+	if err != nil {
+		return err
+	}
+	s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -161,21 +162,21 @@ func RegisterItem(c echo.Context) error {
 	}
 	now := time.Now()
 
-    // フォーマットされた時刻を生成
-    formattedTime := now.Format("060102150405")
+	// フォーマットされた時刻を生成
+	formattedTime := now.Format("060102150405")
 	i.ItemName = r.ItemName
 	i.Num = r.Num
 	i.Price = r.Price
 	i.Category = r.Category
 	i.ImgPass = fmt.Sprintf("images/%s/%s.jpg", r.StoreName, formattedTime)
 	u.UserName = r.UserName
-	
+
 	// StoreNameのデコード
-    decodedStoreName, err := url.QueryUnescape(r.StoreName)
-    if err != nil {
-        return err
-    }
-    s.StoreName = decodedStoreName
+	decodedStoreName, err := url.QueryUnescape(r.StoreName)
+	if err != nil {
+		return err
+	}
+	s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -213,7 +214,7 @@ func RegisterItem(c echo.Context) error {
 		if err != nil {
 			panic(err.Error())
 		}
-		return c.JSON(http.StatusOK, map[string]string{"message":"no img registered"})
+		return c.JSON(http.StatusOK, map[string]string{"message": "no img registered"})
 	}
 
 	err = db.Create(&i).Error
@@ -247,13 +248,13 @@ func AddUserToStore(c echo.Context) error {
 	}
 	u.UserName = r.UserName
 	us.Roll = r.Roll
-	
+
 	// StoreNameのデコード
-    decodedStoreName, err := url.QueryUnescape(r.StoreName)
-    if err != nil {
-        return err
-    }
-    s.StoreName = decodedStoreName
+	decodedStoreName, err := url.QueryUnescape(r.StoreName)
+	if err != nil {
+		return err
+	}
+	s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -310,11 +311,11 @@ func BuyItem(c echo.Context) error {
 	h.Num = r.Num
 
 	// StoreNameのデコード
-    decodedStoreName, err := url.QueryUnescape(r.StoreName)
-    if err != nil {
-        return err
-    }
-    s.StoreName = decodedStoreName
+	decodedStoreName, err := url.QueryUnescape(r.StoreName)
+	if err != nil {
+		return err
+	}
+	s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -373,11 +374,11 @@ func ReplenishmentItem(c echo.Context) error {
 	i.ID = r.ItemID
 
 	// StoreNameのデコード
-    decodedStoreName, err := url.QueryUnescape(r.StoreName)
-    if err != nil {
-        return err
-    }
-    s.StoreName = decodedStoreName
+	decodedStoreName, err := url.QueryUnescape(r.StoreName)
+	if err != nil {
+		return err
+	}
+	s.StoreName = decodedStoreName
 
 	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
 		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
@@ -687,4 +688,39 @@ func CheckOwner(c echo.Context) error {
 	db.Where("user_id = ? AND store_id = ?", user.ID, store.ID).First(&user_store)
 
 	return c.JSON(http.StatusOK, map[string]string{"Roll": user_store.Roll})
+}
+
+func DeleteItem(c echo.Context) error {
+	item_id := c.QueryParam("itemid")
+	// 数値型のIDに変換
+	itemID, err := strconv.Atoi(item_id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid item_id"})
+	}
+
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer func() {
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err.Error())
+		}
+		if err := sqlDB.Close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	// 主キーを指定して削除
+	err = db.Delete(&Item{}, itemID).Error
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to delete item"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "success"})
 }
