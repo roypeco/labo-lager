@@ -23,6 +23,23 @@ import (
 	"gorm.io/gorm"
 )
 
+var DB *gorm.DB
+
+func InitDB() {
+    dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+        os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+    )
+    var err error
+    DB, err = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+    if err != nil {
+        panic(err.Error())
+    }
+}
+
+func GetDB() *gorm.DB {
+    return DB
+}
+
 func RegisterUser(c echo.Context) error {
 	u := new(User)
 	a := new(Auth)
@@ -42,26 +59,8 @@ func RegisterUser(c echo.Context) error {
 	io.WriteString(h, pw_sha256)
 	a.PassHash = fmt.Sprintf("%x", h.Sum(nil))
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
 	// usernameが既に存在するかの確認
-	db.Find(&UsernameLSlice)
+	DB.Find(&UsernameLSlice)
 	for _, user := range UsernameLSlice {
 		if user.UserName == r.UserName {
 			m.Content = "already exist"
@@ -69,15 +68,15 @@ func RegisterUser(c echo.Context) error {
 		}
 	}
 
-	err = db.Create(&u).Error
+	err := DB.Create(&u).Error
 	if err != nil {
 		fmt.Printf("Create user with related data error: %s", err.Error())
 		return err
 	}
 
-	db.Where("user_name = ?", u.UserName).First(&u)
+	DB.Where("user_name = ?", u.UserName).First(&u)
 	a.UserID = uint(u.ID)
-	err = db.Create(&a).Error
+	err = DB.Create(&a).Error
 	if err != nil {
 		fmt.Printf("Create user with related data error: %s", err.Error())
 		return err
@@ -105,49 +104,24 @@ func CreateStore(c echo.Context) error {
 	}
 	s.StoreName = decodedStoreName
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", u.UserName).First(&u)
+	DB.Where("user_name = ?", u.UserName).First(&u)
 	if !(IsValid(token, int(u.ID))) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
 	}
 
-	err = db.Create(&s).Error
+	err = DB.Create(&s).Error
 	if err != nil {
 		panic(err.Error())
 	}
 	// fmt.Printf("%+v", r)
-	db.Where("store_name = ?", s.StoreName).First(&s)
+	DB.Where("store_name = ?", s.StoreName).First(&s)
 	us.UserID = u.ID
 	us.StoreID = s.ID
 	us.Roll = "M"
-	err = db.Create(&us).Error
+	err = DB.Create(&us).Error
 	if err != nil {
 		panic(err.Error())
 	}
-	// db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
-	// u.UserStoreID = us.ID
-	// u.IsOwner = true
-	// s.UserStoreID = us.ID
-
-	// db.Save(&u)
-	// db.Save(&s)
 	return c.JSON(http.StatusOK, map[string]string{"message": "success"})
 }
 
@@ -178,27 +152,9 @@ func RegisterItem(c echo.Context) error {
 	}
 	s.StoreName = decodedStoreName
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", u.UserName).First(&u)
-	db.Where("store_name = ?", s.StoreName).First(&s)
-	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
+	DB.Where("user_name = ?", u.UserName).First(&u)
+	DB.Where("store_name = ?", s.StoreName).First(&s)
+	DB.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
 	if us.Roll != "M" {
 		return c.String(http.StatusOK, "permission error")
 	}
@@ -210,14 +166,14 @@ func RegisterItem(c echo.Context) error {
 	if err != nil {
 		log.Println("ファイルが読み込めませんでした")
 		i.ImgPass = ""
-		err = db.Create(&i).Error
+		err = DB.Create(&i).Error
 		if err != nil {
 			panic(err.Error())
 		}
 		return c.JSON(http.StatusOK, map[string]string{"message": "no img registered"})
 	}
 
-	err = db.Create(&i).Error
+	err = DB.Create(&i).Error
 	if err != nil {
 		panic(err.Error())
 	}
@@ -256,39 +212,21 @@ func AddUserToStore(c echo.Context) error {
 	}
 	s.StoreName = decodedStoreName
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", u.UserName).First(&u)
-	db.Where("store_name = ?", s.StoreName).First(&s)
+	DB.Where("user_name = ?", u.UserName).First(&u)
+	DB.Where("store_name = ?", s.StoreName).First(&s)
 	us.UserID = u.ID
 	us.StoreID = s.ID
 	// db.Save(&u)
-	err = db.Where("user_id = ? AND store_id = ?", u.ID, s.ID).First(&us).Error
+	err = DB.Where("user_id = ? AND store_id = ?", u.ID, s.ID).First(&us).Error
 	if err != nil {
-		err = db.Create(&us).Error
+		err = DB.Create(&us).Error
 		if err != nil {
 			panic(err.Error())
 		}
 		return c.String(http.StatusOK, "success")
 	}
 	us.Roll = r.Roll
-	err = db.Save(&us).Error
+	err = DB.Save(&us).Error
 	if err != nil {
 		panic(err.Error())
 	}
@@ -317,28 +255,10 @@ func BuyItem(c echo.Context) error {
 	}
 	s.StoreName = decodedStoreName
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", u.UserName).First(&u)
-	db.Where("store_name = ?", s.StoreName).First(&s)
-	db.Where("id = ?", i.ID).First(&i)
-	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
+	DB.Where("user_name = ?", u.UserName).First(&u)
+	DB.Where("store_name = ?", s.StoreName).First(&s)
+	DB.Where("id = ?", i.ID).First(&i)
+	DB.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
 
 	if us.Roll != "M" && us.Roll != "C" {
 		return c.String(http.StatusOK, "permission error")
@@ -352,11 +272,11 @@ func BuyItem(c echo.Context) error {
 	h.UserID = uint(u.ID)
 	h.SellerID = uint(i.UserId)
 	i.Num = i.Num - r.Num
-	err = db.Create(&h).Error
+	err = DB.Create(&h).Error
 	if err != nil {
 		panic(err.Error())
 	}
-	db.Save(&i)
+	DB.Save(&i)
 
 	return c.String(http.StatusOK, "success")
 }
@@ -380,34 +300,16 @@ func ReplenishmentItem(c echo.Context) error {
 	}
 	s.StoreName = decodedStoreName
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", u.UserName).First(&u)
-	db.Where("store_name = ?", s.StoreName).First(&s)
-	db.Where("id = ?", i.ID).First(&i)
-	db.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
+	DB.Where("user_name = ?", u.UserName).First(&u)
+	DB.Where("store_name = ?", s.StoreName).First(&s)
+	DB.Where("id = ?", i.ID).First(&i)
+	DB.Where("user_id = ?", u.ID).Where("store_id = ?", s.ID).First(&us)
 
 	if us.Roll != "M" || i.UserId != u.ID {
 		return c.String(http.StatusOK, "permission error")
 	}
 	i.Num += r.Num
-	db.Save(&i)
+	DB.Save(&i)
 
 	return c.String(http.StatusOK, "succsess")
 }
@@ -421,27 +323,10 @@ func Login(c echo.Context) error {
 	}
 	u.UserName = r.UserName
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", u.UserName).First(&u)
+	
+	DB.Where("user_name = ?", u.UserName).First(&u)
 	a.UserID = u.ID
-	db.Where("user_id = ?", u.ID).First(&a)
+	DB.Where("user_id = ?", u.ID).First(&a)
 
 	h := sha256.New()
 	io.WriteString(h, r.Pass)
@@ -483,26 +368,9 @@ func GetStores(c echo.Context) error {
 	user.UserName = username
 	stores := []Store{}
 	user_stores := []UserStore{}
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
 
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", user.UserName).First(&user)
-	db.Where("user_id = ?", user.ID).Find(&user_stores)
+	DB.Where("user_name = ?", user.UserName).First(&user)
+	DB.Where("user_id = ?", user.ID).Find(&user_stores)
 
 	if !(IsValid(token, int(user.ID))) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
@@ -510,7 +378,7 @@ func GetStores(c echo.Context) error {
 
 	for _, user_store := range user_stores {
 		store := Store{}
-		db.Where("id = ?", user_store.StoreID).First(&store)
+		DB.Where("id = ?", user_store.StoreID).First(&store)
 		stores = append(stores, store)
 	}
 
@@ -524,34 +392,17 @@ func GetOtherStores(c echo.Context) error {
 	user.UserName = username
 	stores := []Store{}
 	user_stores := []UserStore{}
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
 
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", user.UserName).First(&user)
+	DB.Where("user_name = ?", user.UserName).First(&user)
 	if !(IsValid(token, int(user.ID))) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
 	}
-	db.Not("user_id = ?", user.ID).Find(&user_stores)
+	DB.Not("user_id = ?", user.ID).Find(&user_stores)
 	log.Printf("%+v", user_stores)
 
 	for _, user_store := range user_stores {
 		store := Store{}
-		db.Where("id = ?", user_store.StoreID).First(&store)
+		DB.Where("id = ?", user_store.StoreID).First(&store)
 		stores = append(stores, store)
 	}
 
@@ -563,26 +414,8 @@ func GetStock(c echo.Context) error {
 	items := []Item{}
 	s.StoreName = c.Param("storename")
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("store_name = ?", s.StoreName).First(&s)
-	db.Where("store_id = ? AND num > ?", s.ID, 0).Find(&items)
+	DB.Where("store_name = ?", s.StoreName).First(&s)
+	DB.Where("store_id = ? AND num > ?", s.ID, 0).Find(&items)
 	return c.JSON(http.StatusOK, items)
 }
 
@@ -591,26 +424,8 @@ func GetAllStock(c echo.Context) error {
 	items := []Item{}
 	s.StoreName = c.Param("storename")
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("store_name = ?", s.StoreName).First(&s)
-	db.Where("store_id = ?", s.ID).Find(&items)
+	DB.Where("store_name = ?", s.StoreName).First(&s)
+	DB.Where("store_id = ?", s.ID).Find(&items)
 	return c.JSON(http.StatusOK, items)
 }
 
@@ -665,27 +480,9 @@ func CheckOwner(c echo.Context) error {
 	user.UserName = username
 	store.StoreName = storename
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	db.Where("user_name = ?", user.UserName).First(&user)
-	db.Where("store_name = ?", store.StoreName).First(&store)
-	db.Where("user_id = ? AND store_id = ?", user.ID, store.ID).First(&user_store)
+	DB.Where("user_name = ?", user.UserName).First(&user)
+	DB.Where("store_name = ?", store.StoreName).First(&store)
+	DB.Where("user_id = ? AND store_id = ?", user.ID, store.ID).First(&user_store)
 
 	return c.JSON(http.StatusOK, map[string]string{"Roll": user_store.Roll})
 }
@@ -698,26 +495,8 @@ func DeleteItem(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid item_id"})
 	}
 
-	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-	)
-	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	defer func() {
-		sqlDB, err := db.DB()
-		if err != nil {
-			panic(err.Error())
-		}
-		if err := sqlDB.Close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
 	// 主キーを指定して削除
-	err = db.Delete(&Item{}, itemID).Error
+	err = DB.Delete(&Item{}, itemID).Error
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to delete item"})
 	}

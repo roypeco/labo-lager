@@ -11,6 +11,18 @@ import (
 )
 
 func main() {
+	Cruds.InitDB()
+
+	defer func() {
+        sqlDB, err := Cruds.GetDB().DB()
+        if err != nil {
+            panic(err.Error())
+        }
+        if err := sqlDB.Close(); err != nil {
+            panic(err.Error())
+        }
+    }()
+
 	e := echo.New()
 	e.Use(middleware.CORS())
 	e.Use(middleware.Recover())
