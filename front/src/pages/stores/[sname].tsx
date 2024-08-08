@@ -20,6 +20,7 @@ import itemImage from '../../../public/img/item.png';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Switch from '@mui/material/Switch';
+import Divider from '@mui/material/Divider';
 import { DialogContentText } from "@mui/material";
 
 
@@ -39,6 +40,8 @@ const register_store = () => {
     const [mode, setMode] = useState(false);
     const rowPath = usePathname();
     const storeName = rowPath ? rowPath.slice(8) : '';
+    const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false); // 削除確認ダイアログの表示状態
+    const [itemToDelete, setItemToDelete] = useState<{ID: number, ItemName: string} | null>(null); // 削除対象アイテム
     
     const handleClickOpen = (item: {ID: number, ItemName: string, Price: number, Category: string, ImgPass: string, Num: number}) => {
         setSelectedItem(item);
@@ -77,6 +80,16 @@ const register_store = () => {
 
     const handleChange = () => {
         setMode((prevState) => !prevState);
+    };
+
+    const handleDeleteConfirmOpen = (item: {ID: number, ItemName: string}) => {
+        setItemToDelete(item);
+        setOpenDeleteConfirm(true);
+    };
+
+    const handleDeleteConfirmClose = () => {
+        setOpenDeleteConfirm(false);
+        setItemToDelete(null);
     };
 
     const handleReplenishment = async (id: number) => {
@@ -144,6 +157,31 @@ const register_store = () => {
         setOpenPurchaseSnack(true);
         handleClose();
     }
+
+    const handleDeleteConfirmed = async () => {
+        if (itemToDelete) {
+            try {
+                const response = await fetch(`http://localhost:8000/restricted/delete/item?itemid=${itemToDelete.ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': jwtToken || ''
+                    }
+                });
+        
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                setRefresh(prev => !prev);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        handleDeleteConfirmClose();
+        handleClose(); // アイテムの詳細モーダルを閉じる
+    };
     
 
 
@@ -264,7 +302,7 @@ const register_store = () => {
                     }}
                 >
                     {mode ? (
-                        <Box>商品を追加/補充</Box>
+                        <Box>商品の追加/補充/削除</Box>
                     ) : (
                         <Box>商品を購入する</Box>
                     )}
@@ -498,8 +536,24 @@ const register_store = () => {
                                 </Button>
                             </Box>
                         )}
-                    <Box mt={2}>
+                    <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
                         <ListItemText primary={`合計: ${totalPrice}円`} />
+                        {mode && (
+                            <Button
+                                onClick={() => {
+                                    if (selectedItem) {
+                                        handleDeleteConfirmOpen(selectedItem);
+                                    }
+                                }}
+                                sx={{
+                                    color: 'red',
+                                    borderColor: 'red',
+                                }}
+                                variant="outlined"
+                            >
+                                削除
+                            </Button>
+                        )}
                     </Box>
                 </DialogContent>
                 <DialogActions
@@ -573,6 +627,28 @@ const register_store = () => {
                     購入が完了しました！
                 </Alert>
             </Snackbar>
+
+            <Dialog
+                open={openDeleteConfirm}
+                onClose={handleDeleteConfirmClose}
+                aria-labelledby="delete-confirm-title"
+                aria-describedby="delete-confirm-description"
+            >
+                <DialogTitle id="delete-confirm-title">
+                    {`「${itemToDelete?.ItemName}」を削除しますか？`}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="delete-confirm-description">
+                        この操作は取り消せません。本当に削除しますか？
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDeleteConfirmClose}>キャンセル</Button>
+                    <Button onClick={handleDeleteConfirmed} autoFocus color="error">
+                        削除
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     )
 }
