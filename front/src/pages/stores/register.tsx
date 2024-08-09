@@ -3,13 +3,17 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
 import DrawerAppBar from "@/components/DrawerAppBar";
-import { TextField, Box, Button } from "@mui/material";
+import { TextField, Box, Button, Snackbar, Typography, Alert } from "@mui/material";
 
 const RegisterStore = () => {
     const router = useRouter();
     const [usernameFromCookie, setUsernameFromCookie] = useState<string | undefined>(undefined);
     const [jwtTokenFromCookie, setJwtTokenFromCookie] = useState<string | undefined>(undefined);
     const [storeName, setStoreName] = useState<string>('');
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
     useEffect(() => {
         setUsernameFromCookie(Cookies.get('username'));
@@ -20,7 +24,6 @@ const RegisterStore = () => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
 
-        // usernameFromCookie を FormData に追加
         if (usernameFromCookie) {
             data.append('username', usernameFromCookie);
         }
@@ -29,14 +32,12 @@ const RegisterStore = () => {
         const description = data.get('description') as string | null;
         const username = data.get('username') as string | null;
 
-        // FormData から JSON に変換
         const jsonData = {
             storename: storename,
             description: description,
             username: username
         };
 
-        // APIにデータを送信する処理を行う
         try {
             const response = await fetch('http://localhost:8000/restricted/register/store', {
                 method: 'POST',
@@ -47,20 +48,29 @@ const RegisterStore = () => {
                 body: JSON.stringify(jsonData)
             });
 
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
+            const responseData = await response.json();
 
-            // const result = await response.json();
-            // console.log('Success:', result);
+            if (responseData.status === 'existing') {
+                setErrorMessage('その店舗名はすでに利用されています。');
+            } else if (responseData.status === 'ok') {
+                setSnackbarMessage('新規店舗登録が完了しました。');
+                setSnackbarSeverity('success');
+                setSnackbarOpen(true);
+                router.push('/users/' + username);
+            } else {
+                throw new Error('Unexpected response status');
+            }
         } catch (error) {
             console.error('Error:', error);
         }
-        router.push('/users/'+username);
     };
 
     const handleStoreNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setStoreName(event.target.value);
+    };
+
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
     };
 
     return (
@@ -117,10 +127,24 @@ const RegisterStore = () => {
                             size="large"
                             type="submit"
                             disabled={!storeName || storeName.toLowerCase() === 'register'}
-                            >
+                        >
                             登録
                         </Button>
                     </Box>
+                    {errorMessage && (
+                        <Typography color="error" sx={{ mt: 2 }}>
+                            {errorMessage}
+                        </Typography>
+                    )}
+                    <Snackbar
+                        open={snackbarOpen}
+                        autoHideDuration={6000}
+                        onClose={handleSnackbarClose}
+                    >
+                        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+                            {snackbarMessage}
+                        </Alert>
+                    </Snackbar>
                 </Box>
             </Box>
         </div>

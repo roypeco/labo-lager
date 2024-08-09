@@ -1,58 +1,89 @@
-import * as React from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link'
-import Cookies from 'js-cookie';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Grid from '@mui/material/Grid';
-import Box from '@mui/material/Box';
-import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
+import React from 'react';
+import { useState } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import DrawerAppBar from '@/components/DrawerAppBar';
+import { Container, CssBaseline, Box, Avatar, Typography, TextField, Button, Snackbar, IconButton, InputAdornment } from '@mui/material';
+import { useRouter } from 'next/router';
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import MuiAlert from '@mui/material/Alert';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import DrawerAppBar from '@/components/DrawerAppBar'; // DrawerAppBarをインポート
 
-function Copyright(props: any) {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
-
-// TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
 export default function SignUp() {
   const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSnackbarClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSnackbar(false);
+    router.push('/login'); // ユーザーをログインページにリダイレクト
+  };
+
+  const validateUsername = (username: string) => {
+    const usernameRegex = /^[a-zA-Z0-9]{6,}$/;
+    return usernameRegex.test(username);
+  };
+
+  const validatePassword = (password: string) => {
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[a-zA-Z\d]{6,}$/;
+    return passwordRegex.test(password);
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const username = data.get('username') as string;
+    const password = data.get('pass') as string;
+
+    if (!validateUsername(username)) {
+      setErrorMessage("ユーザー名は半角英数6文字以上である必要があります。");
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setErrorMessage("パスワードは英数両方を含む6文字以上である必要があります。");
+      return;
+    }
+
     const response = await fetch('http://localhost:8000/register/user', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(Object.fromEntries(data)),
-    })
+    });
+
     if (!response.ok) {
       console.log(`HTTP error! status: ${response.status}`);
-      return
-    } else{
+      return;
+    } else {
       const ResData = await response.json();
-      router.push('/');
+      
+      if (ResData.status === "ok") {
+        setErrorMessage("")
+        setOpenSnackbar(true); // スナックバーを開く
+      } else if (ResData.status === "existing") {
+        setErrorMessage("そのユーザー名は既に使われています。");
+      }
     }
+  };
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    setShowPassword(true);
+  };
+
+  const handleMouseUpPassword = () => {
+    setShowPassword(false);
   };
 
   return (
     <ThemeProvider theme={defaultTheme}>
+      <DrawerAppBar />
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <Box
@@ -62,7 +93,6 @@ export default function SignUp() {
             alignItems: 'center',
           }}
         >
-          <DrawerAppBar />
           <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
             <PersonAddAltIcon />
           </Avatar>
@@ -86,10 +116,29 @@ export default function SignUp() {
               fullWidth
               name="pass"
               label="パスワード"
-              type="pass"
+              type={showPassword ? 'text' : 'password'}
               id="pass"
-              autoComplete="current-pass"
+              autoComplete="current-password"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onMouseDown={handleMouseDownPassword}
+                      onMouseUp={handleMouseUpPassword}
+                      onMouseLeave={handleMouseUpPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+            {errorMessage && (
+              <Typography color="error" variant="body2">
+                {errorMessage}
+              </Typography>
+            )}
             <Button
               type="submit"
               fullWidth
@@ -98,22 +147,15 @@ export default function SignUp() {
             >
               Sign Up
             </Button>
-            {/* <Grid container>
-              <Grid item xs>
-                <Link href="#">
-                  Forgot pass?
-                </Link>
-              </Grid>
-              <Grid item>
-                <Link href="#">
-                  {"Don't have an account? Sign Up"}
-                </Link>
-              </Grid>
-            </Grid> */}
           </Box>
         </Box>
-        {/* <Copyright sx={{ mt: 8, mb: 4 }} /> */}
       </Container>
+
+      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <MuiAlert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
+          ユーザー登録が完了しました！ログインしてください。
+        </MuiAlert>
+      </Snackbar>
     </ThemeProvider>
   );
 }

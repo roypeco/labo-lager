@@ -20,7 +20,6 @@ import itemImage from '../../../public/img/item.png';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
 import { DialogContentText } from "@mui/material";
 
 

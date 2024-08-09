@@ -26,25 +26,24 @@ import (
 var DB *gorm.DB
 
 func InitDB() {
-    dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
-        os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
-    )
-    var err error
-    DB, err = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
-    if err != nil {
-        panic(err.Error())
-    }
+	dataSourceName := fmt.Sprintf(`%s:%s@tcp(%s)/%s`,
+		os.Getenv("USER_NAME"), os.Getenv("MYSQL_ROOT_PASSWORD"), os.Getenv("HOST_PORT"), os.Getenv("DATABASE_NAME"),
+	)
+	var err error
+	DB, err = gorm.Open(mysql.Open(dataSourceName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func GetDB() *gorm.DB {
-    return DB
+	return DB
 }
 
 func RegisterUser(c echo.Context) error {
 	u := new(User)
 	a := new(Auth)
 	r := new(RegistUserRequest)
-	m := new(Message)
 	UsernameLSlice := []User{}
 	if err := c.Bind(r); err != nil {
 		return err
@@ -63,8 +62,7 @@ func RegisterUser(c echo.Context) error {
 	DB.Find(&UsernameLSlice)
 	for _, user := range UsernameLSlice {
 		if user.UserName == r.UserName {
-			m.Content = "already exist"
-			return c.JSON(http.StatusOK, m)
+			return c.JSON(http.StatusOK, map[string]string{"status": "existing"})
 		}
 	}
 
@@ -82,13 +80,14 @@ func RegisterUser(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, u)
+	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func CreateStore(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	u := User{}
 	s := Store{}
+	storesSlice := []Store{}
 	us := UserStore{}
 	r := CreateStoreRequest{}
 	if err := c.Bind(&r); err != nil {
@@ -103,6 +102,14 @@ func CreateStore(c echo.Context) error {
 		return err
 	}
 	s.StoreName = decodedStoreName
+
+	// storenameが既に存在するかの確認
+	DB.Find(&storesSlice)
+	for _, store := range storesSlice {
+		if store.StoreName == r.StoreName {
+			return c.JSON(http.StatusOK, map[string]string{"status": "existing"})
+		}
+	}
 
 	DB.Where("user_name = ?", u.UserName).First(&u)
 	if !(IsValid(token, int(u.ID))) {
@@ -122,7 +129,7 @@ func CreateStore(c echo.Context) error {
 	if err != nil {
 		panic(err.Error())
 	}
-	return c.JSON(http.StatusOK, map[string]string{"message": "success"})
+	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func RegisterItem(c echo.Context) error {
@@ -323,7 +330,6 @@ func Login(c echo.Context) error {
 	}
 	u.UserName = r.UserName
 
-	
 	DB.Where("user_name = ?", u.UserName).First(&u)
 	a.UserID = u.ID
 	DB.Where("user_id = ?", u.ID).First(&a)
@@ -337,7 +343,7 @@ func Login(c echo.Context) error {
 	io.WriteString(h, pw_sha256)
 	check_hash := fmt.Sprintf("%x", h.Sum(nil))
 	if check_hash != a.PassHash {
-		return c.String(http.StatusOK, "not correct")
+		return c.JSON(http.StatusOK, map[string]string{"status": "not correct"})
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -356,6 +362,7 @@ func Login(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
+		"status":   "ok",
 		"token":    tokenString,
 		"username": u.UserName,
 	})

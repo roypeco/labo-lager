@@ -31,69 +31,92 @@ const MyPage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStores = async () => {
       if (!userPath) return;
-
-      const usernameFromCookie = Cookies.get('username');
+  
       const jwtTokenFromCookie = Cookies.get('jwt');
-      setUsername(usernameFromCookie || '');
-      setJwtToken(jwtTokenFromCookie || '');
-
+      
       try {
-        const response = await fetch('http://localhost:8000/restricted/stores?username=' + userPath, {
+        // Fetch stores
+        const storesResponse = await fetch('http://localhost:8000/restricted/stores?username=' + userPath, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': jwtTokenFromCookie || ''
           }
         });
-
-        if (!response.ok) {
+  
+        if (!storesResponse.ok) {
           throw new Error('Network response was not ok');
         }
-
-        const result = await response.json();
-
-        if (Array.isArray(result)) {
-          setStores(result);
+  
+        const storesResult = await storesResponse.json();
+  
+        if (Array.isArray(storesResult)) {
+          setStores(storesResult);
         } else {
-          console.error('Invalid data structure:', result);
+          console.error('Invalid data structure:', storesResult);
         }
-
+  
       } catch (error) {
         console.error('Error:', error);
       }
-
+    };
+  
+    fetchStores();
+  }, [userPath]);
+  
+  useEffect(() => {
+    const fetchOtherStores = async () => {
+      if (!userPath || stores.length === 0) return;
+  
+      const jwtTokenFromCookie = Cookies.get('jwt');
+      
       try {
-        const response = await fetch('http://localhost:8000/restricted/other_stores?username=' + userPath, {
+        // Fetch other stores
+        const otherStoresResponse = await fetch('http://localhost:8000/restricted/other_stores?username=' + userPath, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': jwtTokenFromCookie || ''
           }
         });
-
-        if (!response.ok) {
+  
+        if (!otherStoresResponse.ok) {
           throw new Error('Network response was not ok');
         }
-
-        const result = await response.json();
-
-        if (Array.isArray(result)) {
-          setOtherStores(result);
+  
+        const otherStoresResult = await otherStoresResponse.json();
+  
+        if (Array.isArray(otherStoresResult)) {
+          // Ensure `stores` is updated before processing `otherStores`
+          const storeNamesInStores = new Set(stores.map(store => store.StoreName));
+          const uniqueOtherStores = otherStoresResult.filter(store => !storeNamesInStores.has(store.StoreName));
+  
+          // Remove duplicates within `uniqueOtherStores`
+          const uniqueStores = uniqueOtherStores.reduce((acc: {ID: number, StoreName: string, Description: string}[], store) => {
+            if (!acc.some(item => item.StoreName === store.StoreName)) {
+              acc.push(store);
+            }
+            return acc;
+          }, []);
+  
+          setOtherStores(uniqueStores);
         } else {
-          console.error('Invalid data structure:', result);
+          console.error('Invalid data structure:', otherStoresResult);
         }
-
+  
       } catch (error) {
         console.error('Error:', error);
       }
-
+  
       setLoading(false);
     };
-
-    fetchData();
-  }, [userPath, clickCount]);
+  
+    fetchOtherStores();
+  }, [stores, userPath, clickCount]);
+  
+  
 
   const handleClick = (storeName: string) => {
     const url = `/stores/${encodeURIComponent(storeName)}`;

@@ -1,57 +1,64 @@
-import * as React from 'react';
-import { useRouter } from 'next/router';
-import Link from 'next/link'
-import Cookies from 'js-cookie';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Grid from '@mui/material/Grid';
-import Box from '@mui/material/Box';
-import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
+import React, { useState } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import DrawerAppBar from '@/components/DrawerAppBar';
+import { Box, Button, Container, CssBaseline, TextField, Typography, Avatar, InputAdornment, IconButton, Snackbar, Alert } from '@mui/material';
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { useRouter } from 'next/router';
+import Cookies from 'js-cookie';import DrawerAppBar from '@/components/DrawerAppBar';
 
-function Copyright(props: any) {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center" {...props}>
-      {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
-
-// TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
 export default function SignIn() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(''); // パスワードエラーメッセージを表示するための状態
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // スナックバーの開閉状態
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    setShowPassword(true);
+  };
+
+  const handleMouseUpPassword = () => {
+    setShowPassword(false);
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const response = await fetch('http://localhost:8000/login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(Object.fromEntries(data)),
-    });
-    if (!response.ok) {
-      console.log(`HTTP error! status: ${response.status}`);
-      return;
-    } else {
+    try {
+      const response = await fetch('http://localhost:8000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(data)),
+      });
+
+      if (!response.ok) {
+        console.log(`HTTP error! status: ${response.status}`);
+        return;
+      }
+
       const ResData = await response.json();
-      await Cookies.set('jwt', ResData.token);
-      await Cookies.set('username', ResData.username);
-      router.push('/users/'+ResData.username);
+      if (ResData.status === 'not correct') {
+        setError('ユーザー名またはパスワードが違います'); // エラーメッセージを設定
+      } else if (ResData.status === 'ok') {
+        setError('')
+        await Cookies.set('jwt', ResData.token);
+        await Cookies.set('username', ResData.username);
+        setSnackbarOpen(true); // スナックバーを開く
+        router.push('/users/' + ResData.username);
+      } else {
+        setError('ログインに失敗しました。もう一度お試しください。'); // その他のエラーメッセージ
+      }
+    } catch (error) {
+      console.error('エラーが発生しました', error);
+      setError('サーバーとの通信に失敗しました。'); // 通信エラー時のエラーメッセージ
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   return (
@@ -89,11 +96,31 @@ export default function SignIn() {
               fullWidth
               name="pass"
               label="パスワード"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               id="pass"
               autoComplete="current-pass"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onMouseDown={handleMouseDownPassword}
+                      onMouseUp={handleMouseUpPassword}
+                      onMouseLeave={handleMouseUpPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
-            <Button
+            {error && (
+              <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+                {error}
+              </Typography>
+            )}
+             <Button
               type="submit"
               fullWidth
               variant="contained"
@@ -101,21 +128,13 @@ export default function SignIn() {
             >
               Log in
             </Button>
-            {/* <Grid container>
-              <Grid item xs>
-                <Link href="#">
-                  Forgot pass?
-                </Link>
-              </Grid>
-              <Grid item>
-                <Link href="#">
-                  {"Don't have an account? Sign Up"}
-                </Link>
-              </Grid>
-            </Grid> */}
           </Box>
         </Box>
-        {/* <Copyright sx={{ mt: 8, mb: 4 }} /> */}
+        <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+          <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+            ログインに成功しました！
+          </Alert>
+        </Snackbar>
       </Container>
     </ThemeProvider>
   );
