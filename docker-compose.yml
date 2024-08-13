@@ -19,7 +19,7 @@ services:
     ports:
       - '8000:8000'
     env_file:
-      - ./variables.env
+      - ${ENV_FILE:-variables.env}
     depends_on:
       - db
     volumes:
@@ -36,7 +36,7 @@ services:
       - './db/data:/var/lib/mysql'
       - './db/my.cnf:/etc/mysql/conf.d/my.cnf'
     env_file:
-      - variables.env
+      - variables.env.local
     ports:
       - '3306:3306'
     networks:

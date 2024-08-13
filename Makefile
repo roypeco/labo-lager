@@ -1,10 +1,8 @@
 .PHONY: setup up d ps
 
 d:
-	docker compose down
+	ENV_FILE=./variables.env.local docker compose down
 up:
-	docker compose up -d front go db
-setup:
-	docker compose up -d
+	ENV_FILE=./variables.env.local docker-compose up -d
 ps:
 	docker compose ps
