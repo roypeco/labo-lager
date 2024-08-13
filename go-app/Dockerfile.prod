@@ -1,0 +1,20 @@
+FROM golang:1.22.1 AS builder
+WORKDIR /app/go-app
+
+# 依存関係をキャッシュするためにモジュールファイルを先にコピー
+COPY go.mod go.sum ./
+RUN go mod download
+
+# ソースコードをコピーしてビルド
+COPY ./ ./go-app
+RUN go build -o /app/go-app/main ./go-app/main.go
+
+# 実行用の軽量イメージ
+FROM debian:bookworm-slim
+WORKDIR /app/go-app
+
+# ビルドしたバイナリのみをコピー
+COPY --from=builder /app/go-app/main .
+
+# 実行
+ENTRYPOINT [ "/app/go-app/main" ]

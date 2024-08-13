@@ -1,10 +1,13 @@
 version: '3'
 volumes:
   node_modules:
+
 services:
   front:
     container_name: front
-    build: ./front
+    build:
+      context: ./front
+      dockerfile: Dockerfile.dev
     ports:
       - '3000:3000'
     volumes:
@@ -12,10 +15,12 @@ services:
       - node_modules:/works/node_modules
     tty: true
     stdin_open: true
-    
+
   go:
     container_name: api
-    build: ./go-app
+    build:
+      context: ./go-app
+      dockerfile: Dockerfile.dev
     ports:
       - '8000:8000'
     env_file:
