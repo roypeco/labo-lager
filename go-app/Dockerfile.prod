@@ -7,7 +7,7 @@ RUN go mod download
 
 # ソースコードをコピーしてビルド
 COPY ./ ./go-app
-RUN go build -o /app/go-app/main ./go-app/main.go
+RUN go build -o /app/go-app/main ./cmd/main.go
 
 # 実行用の軽量イメージ
 FROM debian:bookworm-slim
