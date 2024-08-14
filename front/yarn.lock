@@ -622,7 +622,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/js-cookie@npm:^3":
+"@types/js-cookie@npm:^3.0.6":
   version: 3.0.6
   resolution: "@types/js-cookie@npm:3.0.6"
   checksum: 173afaf5ea9d86c22395b9d2a00b6adb0006dcfef165d6dcb0395cdc32f5a5dcf9c3c60f97194119963a15849b8f85121e1ae730b03e40bc0c29b84396ba22f9
@@ -1222,7 +1222,7 @@ __metadata:
     "@mui/icons-material": "npm:^5.15.17"
     "@mui/material": "npm:^5.15.17"
     "@types/axios": "npm:^0.14.0"
-    "@types/js-cookie": "npm:^3"
+    "@types/js-cookie": "npm:^3.0.6"
     "@types/node": "npm:^20.12.7"
     "@types/react": "npm:^18.2.79"
     aws-sdk: "npm:^2.1667.0"
