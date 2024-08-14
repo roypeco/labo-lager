@@ -1,12 +1,25 @@
 FROM node:20.11.1
+
+# 作業ディレクトリの設定
 WORKDIR /works
+
+# パッケージの設定ファイルをコピー
 COPY ./.yarnrc.yml ./package.json ./yarn.lock ./
 
+# Corepackの有効化
 RUN corepack enable
+
+# 必要な依存関係をインストール
 RUN yarn workspaces focus --production
 
+# アプリケーションのソースコードをコピー
 COPY . ./
 
+# プロダクションビルドの実行
+RUN yarn build
+
+# アプリケーションが使用するポートを公開
 EXPOSE 3000
 
+# アプリケーションの起動
 CMD ["yarn", "start"]
