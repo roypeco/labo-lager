@@ -7,6 +7,10 @@ RUN go mod download
 
 # ソースコードをコピーしてビルド
 COPY ./ ./go-app
+
+# デバッグ用にディレクトリの内容を表示
+RUN ls -R ./go-app
+
 RUN go build -o /app/go-app/main ./cmd/main.go
 
 # 実行用の軽量イメージ
