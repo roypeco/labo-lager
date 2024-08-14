@@ -6,19 +6,19 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # ソースコードをコピーしてビルド
-COPY ./ ./go-app
+COPY ./ ./
 
 # デバッグ用にディレクトリの内容を表示
 RUN echo "Checking the contents of go-app directory:" && ls -R ./go-app
 
-RUN go build -o /app/go-app/main ./cmd/main.go
+RUN go build -o ./cmd/main ./cmd/main.go
 
 # 実行用の軽量イメージ
 FROM debian:bookworm-slim
 WORKDIR /app/go-app
 
 # ビルドしたバイナリのみをコピー
-COPY --from=builder /app/go-app/main .
+COPY --from=builder /app/go-app/cmd/main .
 
 # 実行
-ENTRYPOINT [ "/app/go-app/main" ]
+ENTRYPOINT [ "./main" ]
