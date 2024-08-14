@@ -9,7 +9,7 @@ RUN go mod download
 COPY ./ ./go-app
 
 # デバッグ用にディレクトリの内容を表示
-RUN ls -R ./go-app
+RUN echo "Checking the contents of go-app directory:" && ls -R ./go-app
 
 RUN go build -o /app/go-app/main ./cmd/main.go
 
