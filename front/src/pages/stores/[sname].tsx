@@ -101,7 +101,7 @@ const register_store = () => {
     
         // APIにデータを送信する処理を行う
         try {
-            const response = await fetch('http://localhost:8000/restricted/register/replenishment', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/register/replenishment`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -134,7 +134,7 @@ const register_store = () => {
     
         // APIにデータを送信する処理を行う
         try {
-            const response = await fetch('http://localhost:8000/restricted/buy', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/buy`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ const register_store = () => {
     const handleDeleteConfirmed = async () => {
         if (itemToDelete) {
             try {
-                const response = await fetch(`http://localhost:8000/restricted/delete/item?itemid=${itemToDelete.ID}`, {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/delete/item?itemid=${itemToDelete.ID}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -194,7 +194,7 @@ const register_store = () => {
             setJwtToken(jwtTokenFromCookie || '');
 
             try {
-                const url = mode ? `http://localhost:8000/restricted/stock_all/${storeName}` : `http://localhost:8000/restricted/stock/${storeName}`;
+                const url = mode ? `${process.env.NEXT_PUBLIC_API_URL}/restricted/stock_all/${storeName}` : `${process.env.NEXT_PUBLIC_API_URL}/restricted/stock/${storeName}`;
 
                 const response = await fetch(url, {
                 method: 'GET',
@@ -237,7 +237,7 @@ const register_store = () => {
                 console.error('Error:', error);
               }
 
-              const response = await fetch(`http://localhost:8000/restricted/permission?username=${usernameFromCookie}&storename=${storeName}`, {
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/permission?username=${usernameFromCookie}&storename=${storeName}`, {
                 method: 'GET',
                 headers: {
                   'Content-Type': 'application/json',

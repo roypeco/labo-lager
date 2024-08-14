@@ -39,7 +39,7 @@ const RegisterStore = () => {
         };
 
         try {
-            const response = await fetch('http://localhost:8000/restricted/register/store', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/register/store`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

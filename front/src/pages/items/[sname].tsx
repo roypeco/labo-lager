@@ -44,7 +44,7 @@ const RegisterStore = () => {
         console.log(data)
 
         try {
-            const response = await fetch('http://localhost:8000/restricted/register/item', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/register/item`, {
                 method: 'POST',
                 headers: {
                     'Authorization': jwtTokenFromCookie || ''

@@ -38,7 +38,7 @@ const MyPage = () => {
       
       try {
         // Fetch stores
-        const storesResponse = await fetch('http://localhost:8000/restricted/stores?username=' + userPath, {
+        const storesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/stores?username=` + userPath, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ const MyPage = () => {
       
       try {
         // Fetch other stores
-        const otherStoresResponse = await fetch('http://localhost:8000/restricted/other_stores?username=' + userPath, {
+        const otherStoresResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/other_stores?username=` + userPath, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ const MyPage = () => {
 
   const handleSubmit = async (storeName: string, jwtToken: string | null, username: string | null) => {
     try {
-      const response = await fetch('http://localhost:8000/restricted/register/user', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/register/user`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

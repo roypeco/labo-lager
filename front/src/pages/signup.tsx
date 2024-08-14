@@ -51,7 +51,7 @@ export default function SignUp() {
       return;
     }
 
-    const response = await fetch('http://localhost:8000/register/user', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/register/user`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(Object.fromEntries(data)),
