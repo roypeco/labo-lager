@@ -4,10 +4,11 @@
   "license": "MIT",
   "packageManager": "yarn@4.0.0",
   "scripts": {
-  "dev": "next dev",
-  "lint": "biome lint --apply ./src",
-  "format": "biome format --write ./src",
-  "start": "next start"
+    "dev": "next dev",
+    "lint": "biome lint --apply ./src",
+    "format": "biome format --write ./src",
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
     "@biomejs/biome": "^1.7.1",
