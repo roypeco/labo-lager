@@ -74,7 +74,8 @@ func main() {
 	}
 
 	// データベースを作成する
-	err = db.Exec("CREATE DATABASE IF NOT EXISTS dbname").Error
+	dbName := os.Getenv("DATABASE_NAME")
+	err = db.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS %s", dbName)).Error
 	if err != nil {
 		log.Fatal(err)
 	}
