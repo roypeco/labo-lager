@@ -8,6 +8,7 @@ RUN go mod download
 # ソースコードをコピーしてビルド
 COPY ./ ./
 RUN go build -o ./cmd/main ./cmd/main.go
+RUN go build -o ./db/migration ./db/migration.go
 
 # 実行用の軽量イメージ
 FROM debian:bookworm-slim
@@ -15,6 +16,7 @@ WORKDIR /app/go-app
 
 # ビルドしたバイナリのみをコピー
 COPY --from=builder /app/go-app/cmd/main .
+COPY --from=builder /app/go-app/db/migration .
 
 # 実行
 ENTRYPOINT [ "./main" ]
