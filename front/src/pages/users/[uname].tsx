@@ -64,6 +64,7 @@ const MyPage = () => {
     };
   
     fetchStores();
+    setLoading(false);
   }, [userPath]);
   
   useEffect(() => {
@@ -110,7 +111,6 @@ const MyPage = () => {
         console.error('Error:', error);
       }
   
-      setLoading(false);
     };
   
     fetchOtherStores();
