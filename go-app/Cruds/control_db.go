@@ -2,6 +2,7 @@ package Cruds
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -41,96 +42,121 @@ func GetDB() *gorm.DB {
 }
 
 func RegisterUser(c echo.Context) error {
-	u := new(User)
-	a := new(Auth)
-	r := new(RegistUserRequest)
-	UsernameLSlice := []User{}
-	if err := c.Bind(r); err != nil {
-		return err
+	var request RegistUserRequest
+	if err := c.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
 	}
-	u.UserName = r.UserName
-	h := sha256.New()
-	io.WriteString(h, r.Pass)
 
-	pw_sha256 := fmt.Sprintf("%x", h.Sum(nil))
+	// パスワードのハッシュ化
 	salt := os.Getenv("SALT")
-	io.WriteString(h, salt)
-	io.WriteString(h, pw_sha256)
-	a.PassHash = fmt.Sprintf("%x", h.Sum(nil))
+	if salt == "" {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Server configuration error")
+	}
 
-	// usernameが既に存在するかの確認
-	DB.Find(&UsernameLSlice)
-	for _, user := range UsernameLSlice {
-		if user.UserName == r.UserName {
-			return c.JSON(http.StatusOK, map[string]string{"status": "existing"})
+	hash := sha256.New()
+	io.WriteString(hash, request.Pass)
+	passwordSHA256 := fmt.Sprintf("%x", hash.Sum(nil))
+
+	hash.Reset()
+	io.WriteString(hash, salt)
+	io.WriteString(hash, passwordSHA256)
+	passwordHash := fmt.Sprintf("%x", hash.Sum(nil))
+
+	// ユーザー名の重複チェック
+	var existingUser User
+	if err := DB.Where("user_name = ?", request.UserName).First(&existingUser).Error; err == nil {
+		return c.JSON(http.StatusOK, map[string]string{"status": "existing"})
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+	}
+
+	// ユーザーと認証情報の作成
+	newUser := User{UserName: request.UserName}
+	authData := Auth{PassHash: passwordHash}
+
+	if err := DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&newUser).Error; err != nil {
+			return err
 		}
-	}
-
-	err := DB.Create(&u).Error
-	if err != nil {
-		fmt.Printf("Create user with related data error: %s", err.Error())
-		return err
-	}
-
-	DB.Where("user_name = ?", u.UserName).First(&u)
-	a.UserID = uint(u.ID)
-	err = DB.Create(&a).Error
-	if err != nil {
-		fmt.Printf("Create user with related data error: %s", err.Error())
-		return err
+		authData.UserID = newUser.ID
+		return tx.Create(&authData).Error
+	}); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func CreateStore(c echo.Context) error {
+	// JWTトークンからユーザー情報を取得
 	token := c.Get("user").(*jwt.Token)
-	u := User{}
-	s := Store{}
-	storesSlice := []Store{}
-	us := UserStore{}
-	r := CreateStoreRequest{}
-	if err := c.Bind(&r); err != nil {
+
+	// 各種オブジェクトの初期化
+	user := User{}
+	store := Store{}
+	existingStores := []Store{}
+	userStore := UserStore{}
+	requestData := CreateStoreRequest{}
+
+	// リクエストボディをバインドし、データを取得
+	if err := c.Bind(&requestData); err != nil {
 		return err
 	}
-	u.UserName = r.UserName
-	s.Description = r.Description
 
-	// StoreNameのデコード
-	decodedStoreName, err := url.QueryUnescape(r.StoreName)
+	// Userオブジェクトにリクエストからのユーザー名を設定
+	user.UserName = requestData.UserName
+
+	// Storeオブジェクトにリクエストからの説明を設定
+	store.Description = requestData.Description
+
+	// StoreNameのデコード（エンコードされたURLを元に戻す）
+	decodedStoreName, err := url.QueryUnescape(requestData.StoreName)
 	if err != nil {
 		return err
 	}
-	s.StoreName = decodedStoreName
+	store.StoreName = decodedStoreName
 
-	// storenameが既に存在するかの確認
-	DB.Find(&storesSlice)
-	for _, store := range storesSlice {
-		if store.StoreName == r.StoreName {
+	// 既に同じStoreNameが存在するか確認
+	DB.Find(&existingStores)
+	for _, existingStore := range existingStores {
+		if existingStore.StoreName == decodedStoreName {
+			// 既存のストア名がある場合、ステータスを返す
 			return c.JSON(http.StatusOK, map[string]string{"status": "existing"})
 		}
 	}
 
-	DB.Where("user_name = ?", u.UserName).First(&u)
-	if !(IsValid(token, int(u.ID))) {
+	// Userオブジェクトをデータベースから取得
+	DB.Where("user_name = ?", user.UserName).First(&user)
+
+	// トークンの検証、ユーザーIDが一致しない場合は認証エラーを返す
+	if !IsValid(token, int(user.ID)) {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid or expired jwt"})
 	}
 
-	err = DB.Create(&s).Error
+	// Storeオブジェクトをデータベースに作成
+	err = DB.Create(&store).Error
 	if err != nil {
 		panic(err.Error())
 	}
-	// fmt.Printf("%+v", r)
-	DB.Where("store_name = ?", s.StoreName).First(&s)
-	us.UserID = u.ID
-	us.StoreID = s.ID
-	us.Roll = "M"
-	err = DB.Create(&us).Error
+
+	// 新しく作成されたStoreのデータを再取得
+	DB.Where("store_name = ?", store.StoreName).First(&store)
+
+	// UserStoreオブジェクトに関連するUserIDとStoreIDを設定
+	userStore.UserID = user.ID
+	userStore.StoreID = store.ID
+	userStore.Roll = "M" // "M"は管理者権限を意味する仮の役割とする
+
+	// UserStoreオブジェクトをデータベースに作成
+	err = DB.Create(&userStore).Error
 	if err != nil {
 		panic(err.Error())
 	}
+
+	// ストア作成が成功した場合のステータスを返す
 	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
+
 
 func RegisterItem(c echo.Context) error {
 	i := Item{}
