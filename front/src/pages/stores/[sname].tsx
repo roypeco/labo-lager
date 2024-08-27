@@ -623,7 +623,7 @@ const register_store = () => {
 
             <Snackbar open={openPurchaseSnack} autoHideDuration={6000} onClose={handleCloseSnack}>
                 <Alert onClose={handleCloseSnack} severity="success" sx={{ width: '100%' }}>
-                    購入が完了しました！
+                    補充が完了しました！
                 </Alert>
             </Snackbar>
 
