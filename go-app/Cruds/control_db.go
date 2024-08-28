@@ -205,23 +205,23 @@ func RegisterItem(c echo.Context) error {
 		}
 		return c.JSON(http.StatusOK, map[string]string{"message": "no img registered"})
 	}
-
-	err = DB.Create(&i).Error
-	if err != nil {
-		panic(err.Error())
-	}
-
+	
 	// 画像ファイルをs3にアップロード
 	src, err := file.Open()
 	if err != nil {
 		return err
 	}
 	defer src.Close()
-
+	
 	// ファイルをS3にアップロード
 	err = uploadFileToS3(src, fmt.Sprintf(i.ImgPass))
 	if err != nil {
 		return err
+	}
+
+	err = DB.Create(&i).Error
+	if err != nil {
+		panic(err.Error())
 	}
 
 	return c.String(http.StatusOK, "success")
@@ -488,19 +488,26 @@ func uploadFileToS3(file multipart.File, filePath string) error {
 	if err != nil {
 		return err
 	}
-
+	
 	// S3サービスクライアントを作成
 	svc := s3.New(sess)
-
+	
 	// アップロードパラメータを設定
 	params := &s3.PutObjectInput{
 		Bucket: aws.String("labolager-bucket"), // S3バケット名に変更してください
 		Key:    aws.String(filePath),
 		Body:   file,
 	}
+	
+	log.Printf("Starting upload to S3 bucket: %s, file path: %s", "labolager-bucket", filePath)
 
 	// ファイルをS3にアップロード
 	_, err = svc.PutObject(params)
+	if err != nil {
+		log.Printf("Failed to upload file: %v", err)
+		return err
+	}
+	log.Printf("Successfully uploaded file to %s", filePath)
 	return err
 }
 
