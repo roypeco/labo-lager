@@ -14,6 +14,12 @@ RUN go build -o ./db/migration ./db/migration.go
 FROM debian:bookworm-slim
 WORKDIR /app/go-app
 
+RUN apt-get update \
+ && apt-get install -y --force-yes --no-install-recommends apt-transport-https curl ca-certificates \
+ && apt-get clean \
+ && apt-get autoremove \
+ && rm -rf /var/lib/apt/lists/* 
+
 # ビルドしたバイナリのみをコピー
 COPY --from=builder /app/go-app/cmd/main .
 COPY --from=builder /app/go-app/db/migration .
