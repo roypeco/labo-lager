@@ -65,7 +65,7 @@ const MyPage = () => {
   
     fetchStores();
     setLoading(false);
-  }, [userPath]);
+  }, [userPath, clickCount]);
   
   useEffect(() => {
     const fetchOtherStores = async () => {
@@ -133,14 +133,16 @@ const MyPage = () => {
 
   const handleSubmit = async (storeName: string, jwtToken: string | null, username: string | null) => {
     try {
+      const jwtTokenFromCookie = Cookies.get('jwt');
+      const usernameFromCookie = Cookies.get('username');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restricted/register/user`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': jwtToken || ''
+          'Authorization': jwtTokenFromCookie
         },
         body: JSON.stringify({
-          "username": username,
+          "username": usernameFromCookie,
           "storename": storeName,
           "roll": 'C'
         })
