@@ -69,7 +69,7 @@ const MyPage = () => {
   
   useEffect(() => {
     const fetchOtherStores = async () => {
-      if (!userPath || stores.length === 0) return;
+      if (!userPath) return;
   
       const jwtTokenFromCookie = Cookies.get('jwt');
       
