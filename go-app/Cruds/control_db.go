@@ -175,7 +175,6 @@ func RegisterItem(c echo.Context) error {
 	i.Num = r.Num
 	i.Price = r.Price
 	i.Category = r.Category
-	i.ImgPass = fmt.Sprintf("images/%s/%s.jpg", r.StoreName, formattedTime)
 	u.UserName = r.UserName
 
 	// StoreNameのデコード
@@ -184,6 +183,7 @@ func RegisterItem(c echo.Context) error {
 		return err
 	}
 	s.StoreName = decodedStoreName
+	i.ImgPass = fmt.Sprintf("images/%s/%s.jpg", decodedStoreName, formattedTime)
 
 	DB.Where("user_name = ?", u.UserName).First(&u)
 	DB.Where("store_name = ?", s.StoreName).First(&s)
@@ -492,13 +492,10 @@ func uploadFileToS3(file multipart.File, filePath string) error {
 	// S3サービスクライアントを作成
 	svc := s3.New(sess)
 
-	// ファイルパスをエンコード
-	encodedFilePath := url.PathEscape(filePath)
-
 	// アップロードパラメータを設定
 	params := &s3.PutObjectInput{
 		Bucket: aws.String("labolager-bucket"),
-		Key:    aws.String(encodedFilePath),
+		Key:    aws.String(filePath),
 		Body:   file,
 	}
 
