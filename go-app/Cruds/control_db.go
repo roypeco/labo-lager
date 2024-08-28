@@ -483,31 +483,27 @@ func IsValid(token *jwt.Token, uid int) bool {
 func uploadFileToS3(file multipart.File, filePath string) error {
 	// デフォルトのセッションを初期化
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(os.Getenv("AWS_REGION")), // S3バケットのリージョンに変更してください
+		Region: aws.String(os.Getenv("AWS_REGION")),
 	})
 	if err != nil {
 		return err
 	}
-	
+
 	// S3サービスクライアントを作成
 	svc := s3.New(sess)
-	
+
+	// ファイルパスをエンコード
+	encodedFilePath := url.PathEscape(filePath)
+
 	// アップロードパラメータを設定
 	params := &s3.PutObjectInput{
-		Bucket: aws.String("labolager-bucket"), // S3バケット名に変更してください
-		Key:    aws.String(filePath),
+		Bucket: aws.String("labolager-bucket"),
+		Key:    aws.String(encodedFilePath),
 		Body:   file,
 	}
-	
-	log.Printf("Starting upload to S3 bucket: %s, file path: %s", "labolager-bucket", filePath)
 
 	// ファイルをS3にアップロード
 	_, err = svc.PutObject(params)
-	if err != nil {
-		log.Printf("Failed to upload file: %v", err)
-		return err
-	}
-	log.Printf("Successfully uploaded file to %s", filePath)
 	return err
 }
 
