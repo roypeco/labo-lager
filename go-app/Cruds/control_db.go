@@ -2,7 +2,7 @@ package Cruds
 
 import (
 	"crypto/sha256"
-	"errors"
+	// "errors"
 	"fmt"
 	"io"
 	"log"
@@ -42,46 +42,43 @@ func GetDB() *gorm.DB {
 }
 
 func RegisterUser(c echo.Context) error {
-	var request RegistUserRequest
-	if err := c.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request payload")
+	u := new(User)
+	a := new(Auth)
+	r := new(RegistUserRequest)
+	UsernameLSlice := []User{}
+	if err := c.Bind(r); err != nil {
+		return err
 	}
+	u.UserName = r.UserName
+	h := sha256.New()
+	io.WriteString(h, r.Pass)
 
-	// パスワードのハッシュ化
+	pw_sha256 := fmt.Sprintf("%x", h.Sum(nil))
 	salt := os.Getenv("SALT")
-	if salt == "" {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Server configuration error")
-	}
+	io.WriteString(h, salt)
+	io.WriteString(h, pw_sha256)
+	a.PassHash = fmt.Sprintf("%x", h.Sum(nil))
 
-	hash := sha256.New()
-	io.WriteString(hash, request.Pass)
-	passwordSHA256 := fmt.Sprintf("%x", hash.Sum(nil))
-
-	hash.Reset()
-	io.WriteString(hash, salt)
-	io.WriteString(hash, passwordSHA256)
-	passwordHash := fmt.Sprintf("%x", hash.Sum(nil))
-
-	// ユーザー名の重複チェック
-	var existingUser User
-	if err := DB.Where("user_name = ?", request.UserName).First(&existingUser).Error; err == nil {
-		return c.JSON(http.StatusOK, map[string]string{"status": "existing"})
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
-	}
-
-	// ユーザーと認証情報の作成
-	newUser := User{UserName: request.UserName}
-	authData := Auth{PassHash: passwordHash}
-
-	if err := DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(&newUser).Error; err != nil {
-			return err
+	// usernameが既に存在するかの確認
+	DB.Find(&UsernameLSlice)
+	for _, user := range UsernameLSlice {
+		if user.UserName == r.UserName {
+			return c.JSON(http.StatusOK, map[string]string{"status": "existing"})
 		}
-		authData.UserID = newUser.ID
-		return tx.Create(&authData).Error
-	}); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create user")
+	}
+
+	err := DB.Create(&u).Error
+	if err != nil {
+		fmt.Printf("Create user with related data error: %s", err.Error())
+		return err
+	}
+
+	DB.Where("user_name = ?", u.UserName).First(&u)
+	a.UserID = uint(u.ID)
+	err = DB.Create(&a).Error
+	if err != nil {
+		fmt.Printf("Create user with related data error: %s", err.Error())
+		return err
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
