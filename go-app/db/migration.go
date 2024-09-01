@@ -51,8 +51,8 @@ type History struct {
 	SellerID uint
 	UserID   uint `gorm:"not null"`
 	User     User
-	StoreID  uint `gorm:"not null"`
-	Store    Item
+	StoreID  uint  `gorm:"not null"`
+	Store    Store `gorm:"foreignKey:StoreID;references:ID"`
 }
 
 type UserStore struct {
@@ -81,11 +81,14 @@ func main() {
 	}
 	fmt.Println("Database created successfully")
 
-	// マイグレーションを実行してテーブルを作成
-	db.Migrator().DropTable(&User{}, &Item{}, &Store{}, &History{}, &Auth{}, &UserStore{})
-	db.AutoMigrate(&User{}, &Item{}, &Store{}, &History{}, &Auth{}, &UserStore{})
+	// マイグレーションを実行してテーブル構造を変更
+	// db.Migrator().DropTable(&User{}, &Item{}, &Store{}, &History{}, &Auth{}, &UserStore{})
+	err = db.AutoMigrate(&User{}, &Item{}, &Store{}, &History{}, &Auth{}, &UserStore{})
+	if err != nil {
+		log.Fatal("Migration failed:", err)
+	}
 
-	fmt.Println("テーブルが作成されました。")
+	fmt.Println("テーブル構造が変更されました。")
 
 	// DB接続を閉じる
 	sqlDB, _ := db.DB()
